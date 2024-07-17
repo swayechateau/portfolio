@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #111;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .bg-main {
+            background-image: linear-gradient(104deg, rgba(131, 58, 180, 0.5) 0%, rgba(253, 29, 29, 0.5) 50%, rgba(252, 176, 69, 0.5) 100%);
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            z-index: 50;
+            max-height: 10rem;
+            width: 100%;
+            padding: 0.5rem 0;
+            transition: all 0.2s ease-in;
+            backdrop-filter: blur(4px);
+        }
+
+        .shadow {
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .nav-logo {
+            display: none;
+        }
+
+        .bg-fade-bottom {
+            background-image: linear-gradient(180deg, transparent, rgba(37, 37, 37, 0.61), #111);
+        }
+
+        .bg-fade-top {
+            background-image: linear-gradient(360deg, transparent, rgba(37, 37, 37, 0.21), #111);
+        }
+
+        @keyframes blink {
+
+            from,
+            to {
+                color: transparent;
+            }
+
+            50% {
+                color: inherit;
+            }
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px inherit;
+            }
+
+            15% {
+                text-shadow: 2px 2px 10px rgba(0, 255, 0, 1), -2px -2px 10px rgba(0, 255, 0, 1);
+            }
+
+            30% {
+                text-shadow: 2px 2px 4px rgba(0, 255, 0, 0.7), -2px -2px 4px rgba(0, 255, 0, 0.7);
+            }
+
+            50% {
+                text-shadow: 20px 20px 50px rgba(255, 255, 255, 0.5), -20px -20px 50px rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes para {
+            100% {
+                background-position: -5000px 20%, -800px 95%, 500px 50%, 1000px 100%, 400px 0;
+            }
+        }
+
+        .glow {
+            animation: glow 4s infinite;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        .gradient {
+            animation: gradient 15s ease infinite;
+        }
+
+        .para {
+            animation: para 50s linear infinite;
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 768px) {
+            .navigation {
+                top: 0;
+                bottom: auto;
+                display: flex;
+            }
+
+            .nav-logo {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav-logo h1 {
+                margin-left: 0.75rem;
+                margin-right: 0.75rem;
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+        }
+    </style>
+</head>
+
+<body class="flex flex-col w-full h-full">
+    <!-- Navigation (Mobile and Desktop) -->
+    <nav id="navigation" class='navigation bg-main'> <!-- bg-transparent -->
+        <div class="nav-logo">
+            <h1>
+                <span class="text-3xl font-bold text-green-500">S</span>
+                <span class="text-3xl font-bold text-yellow-500">C</span>
+            </h1>
+        </div>
+        <div class="flex items-center justify-evenly text-white md:grow md:justify-center md:space-x-3">
+            <a href="/" title="Home"
+                class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
+                <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M12 5.69L17 10.19V18H15V12H9V18H7V10.19L12 5.69M12 3L2 12H5V20H11V14H13V20H19V12H22L12 3Z">
+                    </path>
+                </svg>
+                <span class="md:text-2xl text-sm capitalize">Home</span>
+            </a>
+
+            <a href="#about" title="About"
+                class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
+                <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M22,3H2C0.91,3.04 0.04,3.91 0,5V19C0.04,20.09 0.91,20.96 2,21H22C23.09,20.96 23.96,20.09 24,19V5C23.96,3.91 23.09,3.04 22,3M22,19H2V5H22V19M14,17V15.75C14,14.09 10.66,13.25 9,13.25C7.34,13.25 4,14.09 4,15.75V17H14M9,7A2.5,2.5 0 0,0 6.5,9.5A2.5,2.5 0 0,0 9,12A2.5,2.5 0 0,0 11.5,9.5A2.5,2.5 0 0,0 9,7M14,7V8H20V7H14M14,9V10H20V9H14M14,11V12H18V11H14">
+                    </path>
+                </svg>
+
+                <span class="md:text-2xl text-sm capitalize">About</span>
+            </a>
+
+            <a href="https://projects.swayechateau.com" title="Projects" target="_blank"
+                class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
+                <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M13.03 20H4C2.9 20 2 19.11 2 18V6C2 4.89 2.89 4 4 4H10L12 6H20C21.1 6 22 6.89 22 8V17.5L20.96 16.44C20.97 16.3 21 16.15 21 16C21 14.88 20.62 13.86 20 13.03V8H4V18H11.42C11.77 18.8 12.33 19.5 13.03 20M22.87 21.19L18.76 17.08C19.17 16.04 18.94 14.82 18.08 13.97C17.18 13.06 15.83 12.88 14.74 13.38L16.68 15.32L15.33 16.68L13.34 14.73C12.8 15.82 13.05 17.17 13.93 18.08C14.79 18.94 16 19.16 17.05 18.76L21.16 22.86C21.34 23.05 21.61 23.05 21.79 22.86L22.83 21.83C23.05 21.65 23.05 21.33 22.87 21.19Z">
+                    </path>
+                </svg>
+
+                <span class="md:text-2xl text-sm capitalize">Projects</span>
+            </a>
+
+            <a href="{{.BlogUrl}}" title="Blog" target="_blank"
+                class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
+                <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M19 5V19H5V5H19M21 3H3V21H21V3M17 17H7V16H17V17M17 15H7V14H17V15M17 12H7V7H17V12Z">
+                    </path>
+                </svg>
+
+                <span class="md:text-2xl text-sm capitalize">Blog</span>
+            </a>
+
+        </div>
+    </nav>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const yAxis = 100; // Adjust this value as needed
+            const navigation = document.getElementById('navigation');
+
+            const transitionNavbar = () => {
+                if (window.scrollY >= yAxis) {
+                    navigation.classList.add('bg-main', 'shadow');
+                    navigation.classList.remove('bg-transparent');
+                } else {
+                    navigation.classList.add('bg-transparent');
+                    navigation.classList.remove('bg-main', 'shadow');
+                }
+            };
+
+            window.addEventListener('scroll', transitionNavbar);
+
+            // Clean up event listener if needed
+            window.addEventListener('beforeunload', () => {
+                window.removeEventListener('scroll', transitionNavbar);
+            });
+        });
+
+    </script>
+    <main class="relative grow">
+        <!-- header -->
+        <header
+            class="flex flex-col w-full bg-blue-400 bg-center bg-no-repeat bg-cover h-[80vh] min-h-max backdrop-blur-sm"
+            style="background-image:url('https://swayechateau.com/media/image/deep-blue.jpg');">
+
+            <div class="flex items-center justify-center mt-20 grow">
+                <div
+                    class="rounded-xl text-white text-center transition-all ease-in m-4 p-5 sm:p-10 backdrop-blur-sm shadow-[0_8px_32px_0_rgba(111,111,111,0.37)] bg-[rgba(0,0,0,0.25)] hover:scale-105">
+                    <h1 class="mb-1 text-4xl font-extrabold animate-glow">
+                        Swaye Chateau
+                    </h1>
+                    <h2 class="py-2 text-2xl">
+                        Etching my journey, <span id="who" class="animate-glow"> one day </span> at a time
+                    </h2>
+                </div>
+            </div>
+            <div class="w-full h-32 bg-fade-bottom"> </div>
+        </header>
+        <!-- End of Header -->
+        <!-- Projects Section -->
+        <section id="projects" class="relative z-10 pb-8">
+            <div class="mx-5 -mt-32 rounded-2xl bg-[rgba(0,0,0,.5)] p-10 text-gray-200 backdrop-blur-sm md:mx-20">
+                <div class="text-center">
+                    <h1 class="text-3xl font-semibold text-gray-100 md:text-6xl">
+                        Featured Projects
+                    </h1>
+                    <p class="my-4 text-xl">
+                        Here are some of the projects I have worked on.
+                    </p>
+                </div>
+                <!-- Projects Showcase -->
+                <div id="projects-showcase" class="grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-3">
+                    <!-- Loop through projects -->
+                    {{range .Projects}}
+                    <div class="overflow-hidden rounded shadow-lg md:col-span-2 xl:col-span-1">
+                        <Image layout="responsive" height="300" width="500" src={{.Hero}} alt={{.Title}} />
+                        <!-- Project Title and Excerpt  -->
+                        <div class="px-6 py-4">
+                            <div class="mb-2 text-xl font-bold">{{.Title}}</div>
+                            <p class="text-base text-gray-400">{{.Excerpt}}</p>
+                        </div>
+                        <!-- Project Tags  -->
+                        <div class="px-6 pt-4 pb-2">
+                            {{range .Tags}}
+                            <span key={tag}
+                                class="mb-2 mr-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
+                                #{{.}}
+                            </span>
+                            {{end}}
+                        </div>
+                        <!-- Project Action Buttons -->
+                        <div class="pt-4 pb-2 text-center">
+                            <a href={{.LiveUrl}} target="_blank" passHref rel="noopener noreferrer"
+                                class="m-1 inline-block cursor-pointer rounded bg-[rgba(255,255,255,0.1)] py-2 px-4 uppercase backdrop-blur hover:bg-[rgba(255,255,255,0.2)]">
+                                View Demo
+                            </a>
+                            <a href={{.GitRepo}} target="_blank" rel="noopener noreferrer"
+                                class="m-1 inline-block cursor-pointer rounded bg-[rgba(255,255,255,0.1)] py-2 px-4 uppercase backdrop-blur hover:bg-[rgba(255,255,255,0.2)]">
+                                View Code
+                            </a>
+                            <a href={{.CaseStudy}} target="_blank" rel="noopener noreferrer"
+                                class="m-1 inline-block cursor-pointer rounded bg-[rgba(255,255,255,0.1)] py-2 px-4 uppercase backdrop-blur hover:bg-[rgba(255,255,255,0.2)]">
+                                View Case Study
+                            </a>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </section>
+        <!-- End of Projects -->
+
+        <section id="about" class="relative bg-cover ">
+            <canvas id="about-matrix" class="absolute w-full h-full bg-cover -z-10"></canvas>
+            <script>
+                class Symbol {
+                    constructor(x, y, fontSize, canvasHeight) {
+                        this.characters = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                        this.x = x;
+                        this.y = y;
+                        this.fontSize = fontSize;
+                        this.text = 'A';
+                        this.canvasHeight = canvasHeight;
+                    }
+
+                    draw(context) {
+                        this.text = this.characters.charAt(Math.floor(Math.random() * this.characters.length));
+                        context.fillText(this.text, this.x * this.fontSize, this.y * this.fontSize);
+                        if (this.y * this.fontSize > this.canvasHeight && Math.random() > 0.97) {
+                            this.y = 0;
+                        } else {
+                            this.y += 0.9;
+                        }
+                    }
+                }
+
+                class Effect {
+                    constructor(canvasWidth, canvasHeight) {
+                        this.fontSize = 16;
+                        this.canvasWidth = canvasWidth;
+                        this.canvasHeight = canvasHeight;
+                        this.columns = this.canvasWidth / this.fontSize;
+                        this.symbols = [];
+                        this.initialize();
+                    }
+
+                    initialize() {
+                        for (let i = 0; i < this.columns; i++) {
+                            this.symbols[i] = new Symbol(i, 0, this.fontSize, this.canvasHeight);
+                        }
+                    }
+
+                    resize(width, height) {
+                        this.canvasWidth = width;
+                        this.canvasHeight = height;
+                        this.columns = this.canvasWidth / this.fontSize;
+                        this.symbols = [];
+                        this.initialize();
+                    }
+                }
+
+                class Matrix {
+                    constructor(canvas) {
+                        this.canvas = canvas;
+                        this.ctx = this.canvas.getContext('2d');
+                        this.canvas.width = window.innerWidth;
+                        this.canvas.height = window.innerHeight;
+                        this.effect = new Effect(this.canvas.width, this.canvas.height);
+                        this.last = 0;
+                        this.fps = 26;
+                        this.timer = 0;
+                        this.nextFrame = 1000 / this.fps;
+                    }
+
+                    width(w) {
+                        this.canvas.width = w;
+                    }
+
+                    height(h) {
+                        this.canvas.height = h;
+                    }
+
+                    resize() {
+                        this.effect.resize(this.canvas.width, this.canvas.height);
+                    }
+
+                    animate(time) {
+                        const deltaTime = time - this.last;
+                        this.last = time;
+                        if (this.timer > this.nextFrame) {
+                            this.ctx.textAlign = 'center';
+                            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                            this.ctx.font = this.effect.fontSize + 'px monospace';
+                            this.ctx.fillStyle = '#0aff0a';
+
+                            this.effect.symbols.forEach(symbol => symbol.draw(this.ctx));
+                            this.timer = 0;
+                        } else {
+                            this.timer += deltaTime;
+                        }
+                        requestAnimationFrame(this.animate.bind(this));
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    const canvas = document.getElementById('about-matrix');
+                    const matrix = new Matrix(canvas);
+                    matrix.animate(0);
+
+                    window.addEventListener('resize', () => {
+                        matrix.width(window.innerWidth);
+                        matrix.height(window.innerHeight);
+                        matrix.resize();
+                    });
+                });
+
+            </script>
+            <div class="bg-fade-top h-32"></div>
+            <div class="flex flex-wrap items-center h-auto py-32 md:mx-20 xl:justify-center ">
+                <div class="flex w-full p-10 rounded-lg xl:w-4/5">
+                    <!-- About Me Summary  -->
+                    <div
+                        class="flex flex-col xl:rounded-l p-4 shadow-2xl backdrop-blur-sm bg-[rgba(0,0,0,0.15)] text-center xl:w-4/5 xl:p-12 xl:text-left">
+                        <div class="grow">
+                            <div class="block w-48 h-48 mx-auto -mt-16 bg-center bg-cover rounded-full shadow-xl xl:hidden"
+                                style="background-image: url('https://yt3.ggpht.com/GojMrcrTTQDEx221wqyX_iIlLdmamrD6LQDwOY9Anv25sh2BgUiZ-LCVAQ4SPohIInh_O_i3zkY=s900-c-k-c0x00ffffff-no-rj')">
+                            </div>
+                            <h1 class="pt-8 text-3xl font-bold text-white xl:pt-0">
+                                Swaye Chateau
+                            </h1>
+                            <div class="pt-3 mx-auto border-b-2 border-green-500 xl:mx-0"></div>
+                            <p class="pt-4 text-xl font-bold text-white">
+                                Software Developer, Photographer and Vlogger
+                            </p>
+                            <p class="pt-2 text-base text-gray-400">
+                                Based in the United Kingdom
+                            </p>
+                            <div>
+                                <p class="pt-4 text-white text-md">
+                                    Currently working with blochchains in the digital identity
+                                    space using Verifiable Credentials and Self-Soverign Identity
+                                    in a decentralised enviroment.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Action Buttons  -->
+                        <div class="py-8 text-lg">
+                            <Link href="https://cv.swayechateau.com" passHref target="_blank">
+                            <div
+                                class="inline-block px-4 py-2 m-1 text-white uppercase bg-green-700 rounded-lg cursor-pointer hover:bg-green-900 ">
+                                View CV
+                            </div>
+                            </Link>
+                            <Link href="/about" passHref target="_blank">
+                            <div
+                                class="inline-block px-4 py-2 m-1 text-white uppercase bg-green-700 rounded-lg cursor-pointer hover:bg-green-900 ">
+                                More About Me
+                            </div>
+                            </Link>
+                        </div>
+                    </div>
+                    <!-- About Me Full Profile Picture  -->
+                    <div class="xl:w-2/6 bg-cover bg-center"
+                        style="background-image: url('https://file.swayechateau.com/view/swayechateaudZ9YM8r3Rx8ubLAN8nzn29')">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Posts Section -->
+        <section class="flex items-center justify-center text-gray-300 ">
+            <div class="container px-5 py-24 ">
+                <div class="mb-12 text-center">
+                    <h1 class="text-4xl font-semibold text-gray-100 md:text-6xl">Recent Posts</h1>
+                    <a href="{{.BlogUrl}}/posts" target="_blank" rel="noopener noreferrer">
+                        <div class="my-2 text-base text-green-300 hover:text-green-400 md:text-lg">See More Posts</div>
+                    </a>
+                </div>
+                <div class="flex flex-wrap -m-4">
+                    {{ range .Posts}}
+                    <div class="px-4 pt-4 sm:w-1/2 lg:w-1/3">
+                        <a href="{{.FullUrl}}" alt="{{.Title}}">
+                            <div class="h-full overflow-hidden rounded-lg">
+                                <img class="object-cover object-center w-full lg:h-72 md:h-48" src="{{.HeroImage}}"
+                                    alt="{{.Title}}" />
+                                <div
+                                    class="p-6 transition duration-300 ease-in rounded-b-lg hover:bg-green-700 hover:text-white">
+                                    <h2 class="mb-1 text-base font-medium text-green-300">
+                                        October 29, 2021
+                                    </h2>
+                                    <h1 class="mb-3 text-2xl font-semibold">{{.Title}}</h1>
+                                    <p class="mb-3 leading-relaxed">{{.Excerpt}}</p>
+                                    <div class="flex flex-wrap items-center ">
+                                        <div class="inline-flex items-center text-green-300 md:mb-2 lg:mb-0">Read More
+                                            <svg class="w-4 h-4 ml-2" viewBox="0 0 24 24" stroke="currentColor"
+                                                strokeWidth="2" fill="none" strokeLinecap="round"
+                                                strokeLinejoin="round">
+                                                <path d="M5 12h14"></path>
+                                                <path d="M12 5l7 7-7 7"></path>
+                                            </svg>
+                                        </div>
+                                        <span
+                                            class="inline-flex items-center py-1 pr-3 ml-auto mr-3 text-sm leading-none text-gray-400 lg:ml-auto md:ml-0">
+                                            <svg class="w-4 h-4 mr-1" stroke="currentColor" strokeWidth="2" fill="none"
+                                                strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>{{.ReadTime}} min read
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="mb-8 text-center">
+                <div class="my-4 text-lg text-gray-300 md:text-lg">
+                    Have Something to say?
+                </div>
+                <h1 class="text-4xl font-semibold text-gray-100 md:text-6xl">
+                    Contact Me
+                </h1>
+            </div>
+            <div class="flex items-center justify-center">
+                <form action="#" class="w-full p-4 md:w-3/4 lg:w-3/6">
+                    <div class="p-3">
+                        <input
+                            class="block w-full px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none focus:border-green-600"
+                            type="text" placeholder="Name" required="" />
+                    </div>
+                    <div class="p-3">
+                        <input
+                            class="block w-full px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none focus:border-green-600"
+                            type="email" placeholder="Email Address" required="" />
+                    </div>
+
+                    <div class="p-3">
+                        <textarea
+                            class="w-full h-56 px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none resize-none focus:border-green-600"
+                            placeholder="Message" required=""></textarea>
+                    </div>
+                    <div class="p-3 pt-4">
+                        <button
+                            class="w-full px-4 py-3 text-2xl font-bold text-white bg-gray-700 rounded hover:bg-gray-900">
+                            Send
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+    <!-- Footer -->
+    <footer class="flex flex-col justify-between px-5 pt-10 pb-32 md:px-20 md:pb-10">
+        <div id="socials" class="mx-auto space-x-3">
+            <a href="https://github.com/swayechateau" class="inline-block text-gray-400 hover:text-gray-500">
+                <span class="sr-only">GitHub</span>
+                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd"
+                        d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                        clipRule="evenodd"></path>
+                </svg>
+            </a>
+            <a href="https://mas.to/@mercylessreap" class="inline-block text-gray-400 hover:text-blue-400">
+                <span class="sr-only">Mastodon</span>
+                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor"
+                        d="M20.94,14C20.66,15.41 18.5,16.96 15.97,17.26C14.66,17.41 13.37,17.56 12,17.5C9.75,17.39 8,16.96 8,16.96V17.58C8.32,19.8 10.22,19.93 12.03,20C13.85,20.05 15.47,19.54 15.47,19.54L15.55,21.19C15.55,21.19 14.27,21.87 12,22C10.75,22.07 9.19,21.97 7.38,21.5C3.46,20.45 2.78,16.26 2.68,12L2.67,8.57C2.67,4.23 5.5,2.96 5.5,2.96C6.95,2.3 9.41,2 11.97,2H12.03C14.59,2 17.05,2.3 18.5,2.96C18.5,2.96 21.33,4.23 21.33,8.57C21.33,8.57 21.37,11.78 20.94,14M18,8.91C18,7.83 17.7,7 17.15,6.35C16.59,5.72 15.85,5.39 14.92,5.39C13.86,5.39 13.05,5.8 12.5,6.62L12,7.5L11.5,6.62C10.94,5.8 10.14,5.39 9.07,5.39C8.15,5.39 7.41,5.72 6.84,6.35C6.29,7 6,7.83 6,8.91V14.17H8.1V9.06C8.1,8 8.55,7.44 9.46,7.44C10.46,7.44 10.96,8.09 10.96,9.37V12.16H13.03V9.37C13.03,8.09 13.53,7.44 14.54,7.44C15.44,7.44 15.89,8 15.89,9.06V14.17H18V8.91Z">
+                    </path>
+                </svg>
+            </a>
+
+            <a href="https://www.youtube.com/channel/UCd1-cM1G-kwXGd0vUkUPk4g"
+                class="inline-block text-gray-400 hover:text-red-500">
+                <span class="sr-only">YouTube</span>
+                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z">
+                    </path>
+                </svg>
+            </a>
+
+            <a href="https://twitter.com/SwayeChateau" class="inline-block text-gray-400 hover:text-blue-300">
+                <span class="sr-only">Twitter</span>
+                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                        d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84">
+                    </path>
+                </svg>
+            </a>
+            </Link>
+        </div>
+
+        <div class="flex flex-col items-center justify-between text-xl md:flex-row">
+            <div id="copyright" class="p-2">
+                <p class="text-white">
+                    Made with <span class="text-red-500">❤</span> by
+                    <a href="{{.BlogUrl}}" class="text-white hover:text-green-400 font-bold">
+                        <span>Swaye Chateau</span>
+                    </a>
+                </p>
+            </div>
+            <div id="copyright" class="p-2">
+                <p class="text-white">
+                    &copy; 2022
+                    <Link href="/" passHref legacyBehavior>
+                    <a class="font-bold text-white hover:text-green-400">
+                        <span> SC Portfolio</span>
+                    </a>
+                    </Link>
+                    . All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
