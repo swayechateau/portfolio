@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"sync"
 )
 
 type Project struct {
@@ -71,6 +72,22 @@ type About struct {
 	Title string
 }
 
+var templateCache = map[string]*template.Template{}
+
+func init() {
+	cacheTemplates("templates/index.html", "templates/about.html")
+}
+
+func cacheTemplates(filenames ...string) {
+	for _, filename := range filenames {
+		tmpl, err := template.ParseFiles(filename)
+		if err != nil {
+			log.Fatalf("Error parsing template %s: %s\n", filename, err)
+		}
+		templateCache[filename] = tmpl
+	}
+}
+
 func (db *Database) SaveToCache() error {
 	file, err := os.Create("cache.json")
 	if err != nil {
@@ -91,13 +108,11 @@ func (db *Database) SaveToCache() error {
 }
 
 func (db *Database) UpdateCacheIfNewData(blogUrl string) error {
-	// Fetch the latest data from the API
 	newData := Database{}
 	if err := newData.FetchFromAPI(blogUrl); err != nil {
 		return fmt.Errorf("could not fetch new data from API: %w", err)
 	}
 
-	// Compare the new data with the cached data
 	if !reflect.DeepEqual(db, &newData) {
 		log.Println("New data found, updating cache")
 		*db = newData
@@ -126,14 +141,31 @@ func (db *Database) LoadFromCache() error {
 	return nil
 }
 
-func (db *Database) FetchFromAPI(postApi string) error {
-	log.Println("Fetching data from API")
-	if err := db.fetchPosts(postApi); err != nil {
-		return err
+func (db *Database) FetchFromAPI(blogUrl string) error {
+	var wg sync.WaitGroup
+	var errPosts, errProjects error
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		errPosts = db.fetchPosts(blogUrl)
+	}()
+
+	go func() {
+		defer wg.Done()
+		errProjects = db.fetchProjects()
+	}()
+
+	wg.Wait()
+
+	if errPosts != nil {
+		return fmt.Errorf("error fetching posts: %w", errPosts)
 	}
-	if err := db.fetchProjects(); err != nil {
-		return err
+	if errProjects != nil {
+		return fmt.Errorf("error fetching projects: %w", errProjects)
 	}
+
 	return db.SaveToCache()
 }
 
@@ -181,7 +213,6 @@ func fetchPostsFromAPI(url string) (ApiResponse, error) {
 }
 
 func fetchProjectsFromAPI() ([]Project, error) {
-	// Replace with actual API call when created
 	return []Project{
 		{
 			Hero:       "https://file.swayechateau.com/view/swayechateauWLGYnBgsrYxGZSputQx822",
@@ -224,9 +255,8 @@ func (a *App) FetchData() error {
 }
 
 func (a *App) EnsureData() error {
-	// Load from cache or fetch from API if cache load fails
 	if err := a.Database.LoadFromCache(); err != nil {
-		log.Printf("Error loading from cache: %s, fetching from API", err.Error())
+		log.Printf("Error loading from cache: %s, fetching from API", err)
 		return a.Database.FetchFromAPI(a.APIs.Blog)
 	}
 	log.Println("Loaded data from cache")
@@ -236,27 +266,30 @@ func (a *App) EnsureData() error {
 
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := a.FetchData(); err != nil {
-		// Log the error and continue to render the page
 		log.Printf("Error fetching data: %s\n", err)
 	}
 	a.Home.Projects = a.Database.Projects
 	a.Home.Posts = a.Database.Posts.Recent
-	tmpl, err := template.ParseFiles("templates/index.html")
-	if err != nil {
+
+	tmpl, ok := templateCache["templates/index.html"]
+	if !ok {
 		http.Error(w, "Unable to load template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, a.Home)
+	if err := tmpl.Execute(w, a.Home); err != nil {
+		http.Error(w, "Unable to render template", http.StatusInternalServerError)
+	}
 }
 
 func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/about.html")
-	if err != nil {
-		log.Printf("Templating Error: %s\n", err)
+	tmpl, ok := templateCache["templates/about.html"]
+	if !ok {
 		http.Error(w, "Unable to load template", http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, a.About)
+	if err := tmpl.Execute(w, a.About); err != nil {
+		http.Error(w, "Unable to render template", http.StatusInternalServerError)
+	}
 }
 
 func main() {
@@ -264,7 +297,6 @@ func main() {
 	app.APIs.Blog = "http://localhost:8000/api/posts"
 	app.APIs.Projects = "http://localhost:8000/api/projects"
 
-	// Load from cache or fetch from API if cache load fails
 	if err := app.EnsureData(); err != nil {
 		log.Printf("Error loading from API: %s", err.Error())
 	}
