@@ -5,97 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-main {
-            background-image: linear-gradient(104deg, rgba(35, 32, 36, 0.5) 0%, rgba(24, 67, 23, 0.5) 50%, rgba(43, 105, 18, 0.5) 100%);
-            /* linear-gradient(60deg, #333 0%, rgb(134, 239, 172) 100%) */
-        }
-
-        .bg-fade-bottom {
-            background-image: linear-gradient(180deg, transparent, rgba(37, 37, 37, 0.61), #111);
-        }
-
-        .bg-fade-top {
-            background-image: linear-gradient(360deg, transparent, rgba(37, 37, 37, 0.21), #111);
-        }
-
-        .animate-glow {
-            animation: glow 4s infinite;
-        }
-
-        .animate-blink {
-            animation: blink 1s infinite;
-        }
-
-        .gradient {
-            animation: gradient 15s ease infinite;
-        }
-
-        .para {
-            animation: para 50s linear infinite;
-        }
-
-        @keyframes blink {
-
-            from,
-            to {
-                color: transparent;
-            }
-
-            50% {
-                color: inherit;
-            }
-        }
-
-        @keyframes glow {
-            0% {
-                text-shadow: 0 0 10px inherit;
-            }
-
-            15% {
-                text-shadow: 2px 2px 10px rgba(0, 255, 0, 1), -2px -2px 10px rgba(0, 255, 0, 1);
-            }
-
-            30% {
-                text-shadow: 2px 2px 4px rgba(0, 255, 0, 0.7), -2px -2px 4px rgba(0, 255, 0, 0.7);
-            }
-
-            50% {
-                text-shadow: 20px 20px 50px rgba(255, 255, 255, 0.5), -20px -20px 50px rgba(255, 255, 255, 0.5);
-            }
-        }
-
-        @keyframes gradient {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        @keyframes para {
-            100% {
-                background-position: -5000px 20%, -800px 95%, 500px 50%, 1000px 100%, 400px 0;
-            }
-        }
-
-        /* Desktop Styles */
-        @media (min-width: 768px) {
-            .nav-logo h1 {
-                margin-left: 0.75rem;
-                margin-right: 0.75rem;
-                margin-top: 0.5rem;
-                margin-bottom: 0.5rem;
-            }
-        }
-    </style>
+    <link rel="icon" href="https://swayechateau.com/media/image/swaye-logo.png" type="image/png">
+    <link rel="stylesheet" href="/style.css">
 </head>
 
 <body class="flex flex-col w-full h-full bg-[#111]">
@@ -153,31 +64,7 @@
             </a>
 
         </div>
-        <script>
-
-            document.addEventListener('DOMContentLoaded', () => {
-                const yAxis = 100; // Adjust this value as needed
-                const navigation = document.getElementById('navigation');
-
-                const transitionNavbar = () => {
-                    if (window.scrollY >= yAxis) {
-                        navigation.classList.add('bg-main', 'shadow');
-                        navigation.classList.remove('bg-transparent');
-                    } else {
-                        navigation.classList.add('bg-transparent');
-                        navigation.classList.remove('bg-main', 'shadow');
-                    }
-                };
-
-                window.addEventListener('scroll', transitionNavbar);
-
-                // Clean up event listener if needed
-                window.addEventListener('beforeunload', () => {
-                    window.removeEventListener('scroll', transitionNavbar);
-                });
-            });
-
-        </script>
+        <script src="/navigation.js"></script>
     </nav>
     <main class="relative grow">
         <section id="about" class="overflow-hidden">

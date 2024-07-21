@@ -605,6 +605,7 @@ func main() {
 		ProjectsUrl: app.GetProjectsUrl(),
 	}
 
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", app.HomeHandler)
 	http.HandleFunc("/about", app.AboutHandler)
 	http.HandleFunc("/contact", app.ContactFormHandler)

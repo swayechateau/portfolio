@@ -5,97 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} updated</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-main {
-            background-image: linear-gradient(104deg, rgba(35, 32, 36, 0.5) 0%, rgba(24, 67, 23, 0.5) 50%, rgba(43, 105, 18, 0.5) 100%);
-            /* linear-gradient(60deg, #333 0%, rgb(134, 239, 172) 100%) */
-        }
-
-        .bg-fade-bottom {
-            background-image: linear-gradient(180deg, transparent, rgba(37, 37, 37, 0.61), #111);
-        }
-
-        .bg-fade-top {
-            background-image: linear-gradient(360deg, transparent, rgba(37, 37, 37, 0.21), #111);
-        }
-
-        .animate-glow {
-            animation: glow 4s infinite;
-        }
-
-        .animate-blink {
-            animation: blink 1s infinite;
-        }
-
-        .gradient {
-            animation: gradient 15s ease infinite;
-        }
-
-        .para {
-            animation: para 50s linear infinite;
-        }
-
-        @keyframes blink {
-
-            from,
-            to {
-                color: transparent;
-            }
-
-            50% {
-                color: inherit;
-            }
-        }
-
-        @keyframes glow {
-            0% {
-                text-shadow: 0 0 10px inherit;
-            }
-
-            15% {
-                text-shadow: 2px 2px 10px rgba(0, 255, 0, 1), -2px -2px 10px rgba(0, 255, 0, 1);
-            }
-
-            30% {
-                text-shadow: 2px 2px 4px rgba(0, 255, 0, 0.7), -2px -2px 4px rgba(0, 255, 0, 0.7);
-            }
-
-            50% {
-                text-shadow: 20px 20px 50px rgba(255, 255, 255, 0.5), -20px -20px 50px rgba(255, 255, 255, 0.5);
-            }
-        }
-
-        @keyframes gradient {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        @keyframes para {
-            100% {
-                background-position: -5000px 20%, -800px 95%, 500px 50%, 1000px 100%, 400px 0;
-            }
-        }
-
-        /* Desktop Styles */
-        @media (min-width: 768px) {
-            .nav-logo h1 {
-                margin-left: 0.75rem;
-                margin-right: 0.75rem;
-                margin-top: 0.5rem;
-                margin-bottom: 0.5rem;
-            }
-        }
-    </style>
+    <link rel="icon" href="https://swayechateau.com/media/image/swaye-logo.png" type="image/png">
+    <link rel="stylesheet" href="/style.css">
 </head>
 
 <body class="flex flex-col w-full h-full bg-[#111]">
@@ -153,31 +64,7 @@
             </a>
 
         </div>
-        <script>
-
-            document.addEventListener('DOMContentLoaded', () => {
-                const yAxis = 100; // Adjust this value as needed
-                const navigation = document.getElementById('navigation');
-
-                const transitionNavbar = () => {
-                    if (window.scrollY >= yAxis) {
-                        navigation.classList.add('bg-main', 'shadow');
-                        navigation.classList.remove('bg-transparent');
-                    } else {
-                        navigation.classList.add('bg-transparent');
-                        navigation.classList.remove('bg-main', 'shadow');
-                    }
-                };
-
-                window.addEventListener('scroll', transitionNavbar);
-
-                // Clean up event listener if needed
-                window.addEventListener('beforeunload', () => {
-                    window.removeEventListener('scroll', transitionNavbar);
-                });
-            });
-
-        </script>
+        <script src="/navigation.js"></script>
     </nav>
 
     <main class="relative grow">
@@ -256,110 +143,7 @@
 
         <section id="about" class="relative bg-cover ">
             <canvas id="about-matrix" class="absolute w-full h-full bg-cover -z-10"></canvas>
-            <script>
-                class Symbol {
-                    constructor(x, y, fontSize, canvasHeight) {
-                        this.characters = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                        this.x = x;
-                        this.y = y;
-                        this.fontSize = fontSize;
-                        this.text = 'A';
-                        this.canvasHeight = canvasHeight;
-                    }
-
-                    draw(context) {
-                        this.text = this.characters.charAt(Math.floor(Math.random() * this.characters.length));
-                        context.fillText(this.text, this.x * this.fontSize, this.y * this.fontSize);
-                        if (this.y * this.fontSize > this.canvasHeight && Math.random() > 0.97) {
-                            this.y = 0;
-                        } else {
-                            this.y += 0.9;
-                        }
-                    }
-                }
-
-                class Effect {
-                    constructor(canvasWidth, canvasHeight) {
-                        this.fontSize = 16;
-                        this.canvasWidth = canvasWidth;
-                        this.canvasHeight = canvasHeight;
-                        this.columns = this.canvasWidth / this.fontSize;
-                        this.symbols = [];
-                        this.initialize();
-                    }
-
-                    initialize() {
-                        for (let i = 0; i < this.columns; i++) {
-                            this.symbols[i] = new Symbol(i, 0, this.fontSize, this.canvasHeight);
-                        }
-                    }
-
-                    resize(width, height) {
-                        this.canvasWidth = width;
-                        this.canvasHeight = height;
-                        this.columns = this.canvasWidth / this.fontSize;
-                        this.symbols = [];
-                        this.initialize();
-                    }
-                }
-
-                class Matrix {
-                    constructor(canvas) {
-                        this.canvas = canvas;
-                        this.ctx = this.canvas.getContext('2d');
-                        this.canvas.width = window.innerWidth;
-                        this.canvas.height = window.innerHeight;
-                        this.effect = new Effect(this.canvas.width, this.canvas.height);
-                        this.last = 0;
-                        this.fps = 26;
-                        this.timer = 0;
-                        this.nextFrame = 1000 / this.fps;
-                    }
-
-                    width(w) {
-                        this.canvas.width = w;
-                    }
-
-                    height(h) {
-                        this.canvas.height = h;
-                    }
-
-                    resize() {
-                        this.effect.resize(this.canvas.width, this.canvas.height);
-                    }
-
-                    animate(time) {
-                        const deltaTime = time - this.last;
-                        this.last = time;
-                        if (this.timer > this.nextFrame) {
-                            this.ctx.textAlign = 'center';
-                            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                            this.ctx.font = this.effect.fontSize + 'px monospace';
-                            this.ctx.fillStyle = '#0aff0a';
-
-                            this.effect.symbols.forEach(symbol => symbol.draw(this.ctx));
-                            this.timer = 0;
-                        } else {
-                            this.timer += deltaTime;
-                        }
-                        requestAnimationFrame(this.animate.bind(this));
-                    }
-                }
-
-                document.addEventListener('DOMContentLoaded', () => {
-                    const canvas = document.getElementById('about-matrix');
-                    const matrix = new Matrix(canvas);
-                    matrix.animate(0);
-
-                    window.addEventListener('resize', () => {
-                        matrix.width(window.innerWidth);
-                        matrix.height(window.innerHeight);
-                        matrix.resize();
-                    });
-                });
-
-            </script>
+            <script src="/matrix.js"></script>
             <div class="bg-fade-top h-32"></div>
             <div class="flex flex-wrap items-center h-auto py-32 md:mx-20 xl:justify-center ">
                 <div class="flex w-full p-10 rounded-lg xl:w-4/5">
@@ -498,55 +282,7 @@
                     </div>
                 </form>
             </div>
-            <script>
-                const contactAlert = document.getElementById(elementId);
-                const contactForm = document.getElementById('contactForm');
-                contactForm.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-
-                    const form = e.target;
-                    const formData = new FormData(form);
-                    const request = new Request(form.action, {
-                        method: form.method,
-                        body: JSON.stringify({ username: "example" }),
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Accept": "application/json"
-                        },
-                    });
-                    const data = {
-                        name: formData.get('name'),
-                        email: formData.get('email'),
-                        message: formData.get('message')
-                    };
-                    console.log(data);
-
-                    try {
-                        const response = await fetch(request);
-
-                        if (response.ok) {
-                            // Display success message
-                            contactAlert.classList.remove('hidden');
-                            contactAlert.classList.remove('bg-red-500');
-                            contactAlert.classList.add('bg-green-500');
-                            contactAlert.innerHTML = 'Message sent successfully';
-                        } else {
-                            // Handle errors
-                            const errorData = await response.json();
-                            contactAlert.classList.remove('hidden');
-                            contactAlert.classList.remove('bg-green-500');
-                            contactAlert.classList.add('bg-red-500');
-                            contactAlert.innerHTML = 'Error: ' + errorData.message;
-                        }
-                    } catch (error) {
-                        console.error('Error submitting form:', error);
-                        contactAlert.classList.remove('hidden');
-                        contactAlert.classList.remove('bg-green-500');
-                        contactAlert.classList.add('bg-red-500');
-                        contactAlert.innerHTML = 'Error: ' + error.message;
-                    }
-                });
-            </script>
+            <script src="/contact-form.js"></script>
         </section>
 
     </main>

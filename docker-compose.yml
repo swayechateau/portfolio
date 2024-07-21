@@ -8,6 +8,7 @@ services:
       - .env
     volumes:
       - ./templates:/app/templates
+      - ./static:/app/static
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.portfolio.rule=Host(`swaye.dev`)"
