@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #111;
@@ -160,7 +161,7 @@
                 <span class="md:text-2xl text-sm capitalize">Home</span>
             </a>
 
-            <a href="#about" title="About"
+            <a href="/about" title="About"
                 class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
                 <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                     <path fill="currentColor"
@@ -194,32 +195,33 @@
             </a>
 
         </div>
-    </nav>
-    <script>
+        <script>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const yAxis = 100; // Adjust this value as needed
-            const navigation = document.getElementById('navigation');
+            document.addEventListener('DOMContentLoaded', () => {
+                const yAxis = 100; // Adjust this value as needed
+                const navigation = document.getElementById('navigation');
 
-            const transitionNavbar = () => {
-                if (window.scrollY >= yAxis) {
-                    navigation.classList.add('bg-main', 'shadow');
-                    navigation.classList.remove('bg-transparent');
-                } else {
-                    navigation.classList.add('bg-transparent');
-                    navigation.classList.remove('bg-main', 'shadow');
-                }
-            };
+                const transitionNavbar = () => {
+                    if (window.scrollY >= yAxis) {
+                        navigation.classList.add('bg-main', 'shadow');
+                        navigation.classList.remove('bg-transparent');
+                    } else {
+                        navigation.classList.add('bg-transparent');
+                        navigation.classList.remove('bg-main', 'shadow');
+                    }
+                };
 
-            window.addEventListener('scroll', transitionNavbar);
+                window.addEventListener('scroll', transitionNavbar);
 
-            // Clean up event listener if needed
-            window.addEventListener('beforeunload', () => {
-                window.removeEventListener('scroll', transitionNavbar);
+                // Clean up event listener if needed
+                window.addEventListener('beforeunload', () => {
+                    window.removeEventListener('scroll', transitionNavbar);
+                });
             });
-        });
 
-    </script>
+        </script>
+    </nav>
+
     <main class="relative grow">
         <!-- header -->
         <header
@@ -256,7 +258,7 @@
                     <!-- Loop through projects -->
                     {{range .Projects}}
                     <div class="overflow-hidden rounded shadow-lg md:col-span-2 xl:col-span-1">
-                        <Image layout="responsive" height="300" width="500" src={{.Hero}} alt={{.Title}} />
+                        <Image layout="responsive" height="300" src={{.Hero}} alt={{.Title}} />
                         <!-- Project Title and Excerpt  -->
                         <div class="px-6 py-4">
                             <div class="mb-2 text-xl font-bold">{{.Title}}</div>
@@ -429,18 +431,14 @@
                         </div>
                         <!-- Action Buttons  -->
                         <div class="py-8 text-lg">
-                            <Link href="https://cv.swayechateau.com" passHref target="_blank">
-                            <div
+                            <a href="https://cv.swayechateau.com" target="_blank"
                                 class="inline-block px-4 py-2 m-1 text-white uppercase bg-green-700 rounded-lg cursor-pointer hover:bg-green-900 ">
                                 View CV
-                            </div>
-                            </Link>
-                            <Link href="/about" passHref target="_blank">
-                            <div
-                                class="inline-block px-4 py-2 m-1 text-white uppercase bg-green-700 rounded-lg cursor-pointer hover:bg-green-900 ">
+                            </a>
+                            <a href="/about" class="inline-block px-4 py-2 m-1 text-white uppercase bg-green-700 rounded-lg
+                                cursor-pointer hover:bg-green-900 ">
                                 More About Me
-                            </div>
-                            </Link>
+                            </a>
                         </div>
                     </div>
                     <!-- About Me Full Profile Picture  -->
@@ -511,22 +509,25 @@
                 </h1>
             </div>
             <div class="flex items-center justify-center">
-                <form action="#" class="w-full p-4 md:w-3/4 lg:w-3/6">
-                    <div class="p-3">
-                        <input
-                            class="block w-full px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none focus:border-green-600"
-                            type="text" placeholder="Name" required="" />
+                <form id="contactForm" action="/contact" method="POST" class="w-full p-4 md:w-3/4 lg:w-3/6">
+                    <div id="contactAlert" class="{{.SubmittedClass}} text-white p-4 border-green-500 border-l">
+                        {{.SubmittedMessage}}
                     </div>
                     <div class="p-3">
                         <input
                             class="block w-full px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none focus:border-green-600"
-                            type="email" placeholder="Email Address" required="" />
+                            type="text" placeholder="Name" name="name" required />
+                    </div>
+                    <div class="p-3">
+                        <input
+                            class="block w-full px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none focus:border-green-600"
+                            type="email" placeholder="Email Address" name="email" required />
                     </div>
 
                     <div class="p-3">
                         <textarea
                             class="w-full h-56 px-4 py-3 leading-5 text-gray-100 placeholder-gray-200 placeholder-opacity-100 bg-transparent border-b outline-none appearance-none resize-none focus:border-green-600"
-                            placeholder="Message" required=""></textarea>
+                            placeholder="Message" name="message" required></textarea>
                     </div>
                     <div class="p-3 pt-4">
                         <button
@@ -536,6 +537,55 @@
                     </div>
                 </form>
             </div>
+            <script>
+                const contactAlert = document.getElementById(elementId);
+                const contactForm = document.getElementById('contactForm');
+                contactForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    const form = e.target;
+                    const formData = new FormData(form);
+                    const request = new Request(form.action, {
+                        method: form.method,
+                        body: JSON.stringify({ username: "example" }),
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                    });
+                    const data = {
+                        name: formData.get('name'),
+                        email: formData.get('email'),
+                        message: formData.get('message')
+                    };
+                    console.log(data);
+
+                    try {
+                        const response = await fetch(request);
+
+                        if (response.ok) {
+                            // Display success message
+                            contactAlert.classList.remove('hidden');
+                            contactAlert.classList.remove('bg-red-500');
+                            contactAlert.classList.add('bg-green-500');
+                            contactAlert.innerHTML = 'Message sent successfully';
+                        } else {
+                            // Handle errors
+                            const errorData = await response.json();
+                            contactAlert.classList.remove('hidden');
+                            contactAlert.classList.remove('bg-green-500');
+                            contactAlert.classList.add('bg-red-500');
+                            contactAlert.innerHTML = 'Error: ' + errorData.message;
+                        }
+                    } catch (error) {
+                        console.error('Error submitting form:', error);
+                        contactAlert.classList.remove('hidden');
+                        contactAlert.classList.remove('bg-green-500');
+                        contactAlert.classList.add('bg-red-500');
+                        contactAlert.innerHTML = 'Error: ' + error.message;
+                    }
+                });
+            </script>
         </section>
 
     </main>
@@ -577,7 +627,6 @@
                     </path>
                 </svg>
             </a>
-            </Link>
         </div>
 
         <div class="flex flex-col items-center justify-between text-xl md:flex-row">
@@ -592,11 +641,9 @@
             <div id="copyright" class="p-2">
                 <p class="text-white">
                     &copy; 2022
-                    <Link href="/" passHref legacyBehavior>
-                    <a class="font-bold text-white hover:text-green-400">
+                    <a href="/" class="font-bold text-white hover:text-green-400">
                         <span> SC Portfolio</span>
                     </a>
-                    </Link>
                     . All rights reserved.
                 </p>
             </div>

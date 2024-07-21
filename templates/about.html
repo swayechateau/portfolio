@@ -160,7 +160,7 @@
                 <span class="md:text-2xl text-sm capitalize">Home</span>
             </a>
 
-            <a href="#about" title="About"
+            <a href="/about" title="About"
                 class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
                 <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                     <path fill="currentColor"
@@ -182,7 +182,7 @@
                 <span class="md:text-2xl text-sm capitalize">Projects</span>
             </a>
 
-            <a href="https://nobodycares.dev" title="Blog" target="_blank"
+            <a href="{{.BlogUrl}}" title="Blog" target="_blank"
                 class="flex flex-col items-center justify-center text-2xl transition-all ease-in hover:text-green-400">
                 <svg class="md:hidden" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
                     <path fill="currentColor"
@@ -194,103 +194,107 @@
             </a>
 
         </div>
-    </nav>
-    <script>
+        <script>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const yAxis = 100; // Adjust this value as needed
-            const navigation = document.getElementById('navigation');
+            document.addEventListener('DOMContentLoaded', () => {
+                const yAxis = 100; // Adjust this value as needed
+                const navigation = document.getElementById('navigation');
 
-            const transitionNavbar = () => {
-                if (window.scrollY >= yAxis) {
-                    navigation.classList.add('bg-main', 'shadow');
-                    navigation.classList.remove('bg-transparent');
-                } else {
-                    navigation.classList.add('bg-transparent');
-                    navigation.classList.remove('bg-main', 'shadow');
-                }
-            };
+                const transitionNavbar = () => {
+                    if (window.scrollY >= yAxis) {
+                        navigation.classList.add('bg-main', 'shadow');
+                        navigation.classList.remove('bg-transparent');
+                    } else {
+                        navigation.classList.add('bg-transparent');
+                        navigation.classList.remove('bg-main', 'shadow');
+                    }
+                };
 
-            window.addEventListener('scroll', transitionNavbar);
+                window.addEventListener('scroll', transitionNavbar);
 
-            // Clean up event listener if needed
-            window.addEventListener('beforeunload', () => {
-                window.removeEventListener('scroll', transitionNavbar);
+                // Clean up event listener if needed
+                window.addEventListener('beforeunload', () => {
+                    window.removeEventListener('scroll', transitionNavbar);
+                });
             });
-        });
 
-    </script>
+        </script>
+    </nav>
     <main class="relative grow">
-        <section id="about" class="hide-overflow">
-            <div class="mx-auto hidden-md-and-up v-card v-sheet theme--light">
-                <div class="v-responsive v-image" style="height: 40vh;">
-                    <div class="v-responsive__sizer" style="padding-bottom: 112.5%;"></div>
-                    <div class="v-image__image v-image__image--cover"
-                        style="background-image: url(&quot;https://swayechateau.com/media/image/aboutme.png&quot;); background-position: center center;">
+        <section id="about" class="overflow-hidden">
+            <div class="mx-auto xl:hidden text-white rounded-lg shadow">
+                <div class="relative w-full h-[40vh]">
+                    <div class="absolute inset-0 w-full h-full pb-[112.5%]"></div>
+                    <div class="absolute inset-0 w-full h-full bg-cover bg-center"
+                        style="background-image: url('https://swayechateau.com/media/image/aboutme.png');">
                     </div>
-                    <div class="v-responsive__content">
-                        <div class="bg-tint"></div>
-                        <div class="layout align-end justify-center fill-height pa-3 wrap white--text">
-                            <div class="text-xs-center">
-                                <h1>Swaye Chateau</h1>
-                                <h2 class="font-weight-light">Coding One Day At a Time.</h2>
+                    <div class="absolute inset-0 flex items-end justify-center h-full p-3">
+                        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+                        <div class="relative flex items-end justify-center h-full p-3 text-white">
+                            <div class="text-center">
+                                <h1 class="text-4xl font-bold">Swaye Chateau</h1>
+                                <h2 class="text-2xl font-light">Coding One Day At a Time.</h2>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="v-card__text">
-                    <p class="mb-5 title font-weight-light" style="line-height: 1.7 !important;">
-                    <p>Hello, Swaye here. I am a software developer, who likes to learn and build
-                        things, I am currently learning animation and Mandarin. My passion for tech and
-                        knowledge is what drives me to constantly want to learn new things and the
-                        latest creations out there!!</p>
-                    <p>Being an open individual, I have tailored my site to reflect who I am, you could
-                        say this site is my life journal and toy box. I have not invested time into
-                        building this site for anyone in particular, unless you know me or are trying to
-                        get to know, then welcome to my world!!!</p>
-                    <p>P.S. For those that don't know me, I can be a tad socially awkward... Or maybe
-                        more than a tad, I will let you decide that! :p</p>
+
+                <div class="p-6">
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        Hello, Swaye here. I am a software developer, who likes to learn and build things, I am
+                        currently learning animation and Mandarin. My passion for tech and knowledge is what drives
+                        me to constantly want to learn new things and the latest creations out there!!
                     </p>
-                    <h3 class="display-1 v-heading mb-3 font-weight-light info--text">Skills <span
-                            class="grey--text">(To
-                            Pay The Bills)</span></h3>
-                    <p class="mb-5 title font-weight-light" style="line-height: 1.7 !important;">If you
-                        are on my site to assess my skills for work, my CV can be found here: <a
-                            href="https://cv.swayechateau.com" target="_blank">Curriculum Vitae</a></p>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        Being an open individual, I have tailored my site to reflect who I am, you could say this
+                        site is my life journal and toy box. I have not invested time into building this site for
+                        anyone in particular, unless you know me or are trying to get to know, then welcome to my
+                        world!!!
+                    </p>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        P.S. For those that don't know me, I can be a tad socially awkward... Or maybe more than a
+                        tad, I will let you decide that! :p
+                    </p>
+                    <h3 class="text-4xl mb-3 font-light text-blue-500">Skills <span class="text-gray-500">(To Pay
+                            The Bills)</span></h3>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        If you are on my site to assess my skills for work, my CV can be found here: <a
+                            href="https://cv.swayechateau.com" target="_blank"
+                            class="text-blue-500 hover:underline">Curriculum Vitae</a>
+                    </p>
                 </div>
-                <hr class="v-divider theme--light">
             </div>
-            <div class="layout hidden-sm-and-down white">
-                <div class="flex sm12 md6">
-                    <div class="v-responsive v-image" style="height: 100%;">
-                        <div class="v-responsive__sizer" style="padding-bottom: 112.5%;"></div>
-                        <div class="v-image__image v-image__image--cover"
-                            style="background-image: url(&quot;https://swayechateau.com/media/image/aboutme.png&quot;); background-position: center center;">
-                        </div>
-                        <div class="v-responsive__content"></div>
-                    </div>
+            <div class="hidden xl:flex pt-16 text-white">
+                <div class="w-full md:w-1/2 relative">
+                    <div class="w-full h-0 pb-[112.5%]"></div>
+                    <div class="absolute inset-0 w-full h-full bg-cover bg-center"
+                        style="background-image: url('https://swayechateau.com/media/image/aboutme.png');"></div>
                 </div>
-                <div class="flex sm12 md6 pa-5">
-                    <h1 class="display-1 v-heading mb-3 font-weight-light info--text">About Me</h1>
-                    <h2 class="font-weight-light">Coding One Day At a Time!</h2>
-                    <p class="mb-5 title font-weight-light" style="line-height: 1.7 !important;">
-                    <p>Hello, Swaye here. I am a software developer, who likes to learn and build
-                        things, I am currently learning animation and Mandarin. My passion for tech and
-                        knowledge is what drives me to constantly want to learn new things and the
-                        latest creations out there!!</p>
-                    <p>Being an open individual, I have tailored my site to reflect who I am, you could
-                        say this site is my life journal and toy box. I have not invested time into
-                        building this site for anyone in particular, unless you know me or are trying to
-                        get to know, then welcome to my world!!!</p>
-                    <p>P.S. For those that don't know me, I can be a tad socially awkward... Or maybe
-                        more than a tad, I will let you decide that! :p</p>
+                <div class="w-full md:w-1/2 p-6">
+                    <h1 class="text-4xl mb-3 font-light text-blue-500">About Me</h1>
+                    <h2 class="font-light">Coding One Day At a Time!</h2>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        Hello, Swaye here. I am a software developer, who likes to learn and build things, I am
+                        currently learning animation and Mandarin. My passion for tech and knowledge is what drives
+                        me to constantly want to learn new things and the latest creations out there!!
                     </p>
-                    <h3 class="display-1 v-heading mb-3 font-weight-light info--text">Skills <span
-                            class="grey--text">(To
-                            Pay The Bills)</span></h3>
-                    <p class="mb-5 title font-weight-light" style="line-height: 1.7 !important;">If you
-                        are on my site to assess my skills for work, my CV can be found here: <a
-                            href="https://cv.swayechateau.com" target="_blank">Curriculum Vitae</a></p>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        Being an open individual, I have tailored my site to reflect who I am, you could say this
+                        site is my life journal and toy box. I have not invested time into building this site for
+                        anyone in particular, unless you know me or are trying to get to know, then welcome to my
+                        world!!!
+                    </p>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        P.S. For those that don't know me, I can be a tad socially awkward... Or maybe more than a
+                        tad, I will let you decide that! :p
+                    </p>
+                    <h3 class="text-4xl mb-3 font-light text-blue-500">Skills <span class="text-gray-500">(To Pay
+                            The Bills)</span></h3>
+                    <p class="mb-5 text-lg font-light leading-relaxed">
+                        If you are on my site to assess my skills for work, my CV can be found here: <a
+                            href="https://cv.swayechateau.com" target="_blank"
+                            class="text-blue-500 hover:underline">Curriculum Vitae</a>
+                    </p>
                 </div>
             </div>
         </section>
@@ -333,28 +337,23 @@
                     </path>
                 </svg>
             </a>
-            </Link>
         </div>
 
         <div class="flex flex-col items-center justify-between text-xl md:flex-row">
             <div id="copyright" class="p-2">
                 <p class="text-white">
                     Made with <span class="text-red-500">❤</span> by
-                    <Link href="https://blog.swayechateau.com" passHref legacyBehavior>
-                    <a class="text-white hover:text-green-400 font-bold">
+                    <a href="{{.BlogUrl}}" class="text-white hover:text-green-400 font-bold">
                         <span>Swaye Chateau</span>
                     </a>
-                    </Link>
                 </p>
             </div>
             <div id="copyright" class="p-2">
                 <p class="text-white">
                     &copy; 2022
-                    <Link href="/" passHref legacyBehavior>
-                    <a class="font-bold text-white hover:text-green-400">
+                    <a href="/" class="font-bold text-white hover:text-green-400">
                         <span> SC Portfolio</span>
                     </a>
-                    </Link>
                     . All rights reserved.
                 </p>
             </div>

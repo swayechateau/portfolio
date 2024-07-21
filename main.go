@@ -1,16 +1,24 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"sync"
 )
+
+type ContactForm struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Message string `json:"message"`
+}
 
 type Project struct {
 	Hero       string   `json:"hero"`
@@ -51,25 +59,26 @@ type Database struct {
 }
 
 type App struct {
-	Home  Home
-	About About
-	APIs  struct {
-		Blog     string
-		Projects string
-	}
+	Home     Home
+	About    About
 	Database Database
 }
 
 type Home struct {
-	Title       string
-	BlogUrl     string
-	ProjectsUrl string
-	Projects    []Project
-	Posts       []Post
+	Title            string
+	BlogUrl          string
+	ProjectsUrl      string
+	Projects         []Project
+	Posts            []Post
+	Submitted        bool
+	SubmittedMessage string
+	SubmittedClass   string
 }
 
 type About struct {
-	Title string
+	Title       string
+	BlogUrl     string
+	ProjectsUrl string
 }
 
 var templateCache = map[string]*template.Template{}
@@ -107,9 +116,9 @@ func (db *Database) SaveToCache() error {
 	return nil
 }
 
-func (db *Database) UpdateCacheIfNewData(blogUrl string) error {
+func (db *Database) UpdateCacheIfNewData(blogUrl, token string) error {
 	newData := Database{}
-	if err := newData.FetchFromAPI(blogUrl); err != nil {
+	if err := newData.FetchFromAPI(blogUrl, token); err != nil {
 		return fmt.Errorf("could not fetch new data from API: %w", err)
 	}
 
@@ -141,7 +150,7 @@ func (db *Database) LoadFromCache() error {
 	return nil
 }
 
-func (db *Database) FetchFromAPI(blogUrl string) error {
+func (db *Database) FetchFromAPI(blogUrl, token string) error {
 	var wg sync.WaitGroup
 	var errPosts, errProjects error
 
@@ -149,7 +158,7 @@ func (db *Database) FetchFromAPI(blogUrl string) error {
 
 	go func() {
 		defer wg.Done()
-		errPosts = db.fetchPosts(blogUrl)
+		errPosts = db.fetchPosts(blogUrl, token)
 	}()
 
 	go func() {
@@ -169,8 +178,8 @@ func (db *Database) FetchFromAPI(blogUrl string) error {
 	return db.SaveToCache()
 }
 
-func (db *Database) fetchPosts(url string) error {
-	apiResponse, err := fetchPostsFromAPI(url)
+func (db *Database) fetchPosts(url, token string) error {
+	apiResponse, err := fetchPostsFromAPI(url, token)
 	if err != nil {
 		return fmt.Errorf("error fetching posts: %w", err)
 	}
@@ -187,10 +196,20 @@ func (db *Database) fetchProjects() error {
 	return nil
 }
 
-func fetchPostsFromAPI(url string) (ApiResponse, error) {
+func fetchPostsFromAPI(url, token string) (ApiResponse, error) {
 	var response ApiResponse
+	client := &http.Client{}
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return response, fmt.Errorf("error creating request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; GoClient/1.1)")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return response, fmt.Errorf("error making request: %w", err)
 	}
@@ -248,7 +267,7 @@ func fetchProjectsFromAPI() ([]Project, error) {
 }
 
 func (a *App) FetchData() error {
-	if err := a.Database.UpdateCacheIfNewData(a.APIs.Blog); err != nil {
+	if err := a.Database.UpdateCacheIfNewData(a.GetBlogAPI(), a.GetBlogApiToken()); err != nil {
 		return fmt.Errorf("could not fetch data: %w", err)
 	}
 	return nil
@@ -257,11 +276,11 @@ func (a *App) FetchData() error {
 func (a *App) EnsureData() error {
 	if err := a.Database.LoadFromCache(); err != nil {
 		log.Printf("Error loading from cache: %s, fetching from API", err)
-		return a.Database.FetchFromAPI(a.APIs.Blog)
+		return a.Database.FetchFromAPI(a.GetBlogAPI(), a.GetBlogApiToken())
 	}
 	log.Println("Loaded data from cache")
 
-	return a.Database.UpdateCacheIfNewData(a.APIs.Blog)
+	return a.Database.UpdateCacheIfNewData(a.GetBlogAPI(), a.GetBlogApiToken())
 }
 
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -270,6 +289,24 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	a.Home.Projects = a.Database.Projects
 	a.Home.Posts = a.Database.Posts.Recent
+	a.Home.SubmittedClass = "hidden"
+	// Check for query parameters
+	query := r.URL.Query()
+	if query.Get("status") == "success" {
+		a.Home.Submitted = true
+		a.Home.SubmittedClass = ""
+		a.Home.SubmittedMessage = "Contact form submitted successfully"
+	}
+
+	if query.Get("status") == "error" {
+		a.Home.Submitted = true
+		a.Home.SubmittedClass = ""
+		a.Home.SubmittedMessage = "An error occurred while submitting the contact form"
+	}
+
+	if a.Home.Submitted {
+		log.Printf("Contact form submitted: %s\n", a.Home.SubmittedMessage)
+	}
 
 	tmpl, ok := templateCache["templates/index.html"]
 	if !ok {
@@ -292,31 +329,234 @@ func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (a *App) ContactFormHandler(w http.ResponseWriter, r *http.Request) {
+	acceptHeader := r.Header.Get("Accept")
+	log.Printf("Accept header: %s\n", acceptHeader)
+	r.ParseForm()
+	if acceptHeader == "application/json" {
+		log.Println("Received JSON request")
+		a.ContactFormJSONHandler(w, r)
+		return
+	}
+	log.Println("Received form request")
+	a.ContactFormRedirectHandler(w, r)
+}
+
+func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
+	type Response struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+	response := Response{
+		Status:  "success",
+		Message: "Contact form submitted successfully",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		response.Status = "error"
+		response.Message = "Method not allowed"
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		jsonResponse, _ := json.Marshal(response)
+		w.Write(jsonResponse)
+		log.Printf("Method not allowed: %s\n", r.Method)
+		return
+	}
+
+	form := ContactForm{
+		Name:    r.FormValue("name"),
+		Email:   r.FormValue("email"),
+		Message: r.FormValue("message"),
+	}
+
+	// if err != nil {
+	// 	response.Status = "error"
+	// 	response.Message = "Bad request"
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	jsonResponse, _ := json.Marshal(response)
+	// 	w.Write(jsonResponse)
+	// 	log.Printf("Error decoding JSON: %v\n", err)
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	// Process the form data
+	log.Printf("Received contact form submission: %+v\n", form)
+
+	jsonResponse, _ := json.Marshal(response)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request) {
+	redirectURL, err := url.Parse("/#contactForm")
+	query := redirectURL.Query()
+	query.Set("status", "error")
+	if err != nil {
+		log.Printf("Error parsing URL: %v\n", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		log.Printf("Method not allowed: %s\n", r.Method)
+		redirectURL.RawQuery = query.Encode()
+		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+		return
+	}
+
+	form := ContactForm{
+		Name:    r.FormValue("name"),
+		Email:   r.FormValue("email"),
+		Message: r.FormValue("message"),
+	}
+
+	// decoder := json.NewDecoder(r.FormValue())
+	// err = decoder.Decode(&form)
+	// if err != nil {
+	// 	log.Printf("Error decoding JSON: %v\n", err)
+	// 	redirectURL.RawQuery = query.Encode()
+	// 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	// Process the form data
+	log.Printf("Received contact form submission: %+v\n", form)
+
+	// Set query parameters
+	query.Set("status", "success")
+	redirectURL.RawQuery = query.Encode()
+
+	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+}
+
+func (a *App) GetBlogUrl() string {
+	return urlFallback(
+		os.Getenv("BLOG_URL"),
+		"http://localhost:8000",
+	)
+}
+func (a *App) GetBlogAPI() string {
+	return urlFallback(
+		os.Getenv("BLOG_API"),
+		"http://localhost:8000/api/posts",
+	)
+}
+func (a *App) GetBlogApiToken() string {
+	return os.Getenv("BLOG_API_TOKEN")
+}
+
+func (a *App) GetBlogClientId() string {
+	return os.Getenv("BLOG_CLIENT_ID")
+}
+func (a *App) GetBlogClientSecret() string {
+	return os.Getenv("BLOG_CLIENT_SECRET")
+}
+
+func (a *App) GetBlogApiAuthToken() string {
+	client := &http.Client{}
+
+	formData := map[string]string{
+		"grant_type":    "client_credentials",
+		"client_id":     a.GetBlogClientId(),
+		"client_secret": a.GetBlogClientSecret(),
+		"scope":         "",
+	}
+	formDataBytes, err := json.Marshal(formData)
+	if err != nil {
+		log.Fatalf("Error marshalling form data: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", a.GetBlogUrl()+"/oauth/token", bytes.NewBuffer(formDataBytes))
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error sending request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error reading response body: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Received non-200 status code: %d, body: %s", resp.StatusCode, body)
+	}
+
+	var tokenResponse struct {
+		AccessToken string `json:"access_token"`
+	}
+
+	if err := json.Unmarshal(body, &tokenResponse); err != nil {
+		log.Fatalf("Error unmarshalling response body: %v", err)
+	}
+
+	accessToken := tokenResponse.AccessToken
+	fmt.Printf("Access Token: %s\n", accessToken)
+	return accessToken
+}
+
+func (a *App) GetProjectsUrl() string {
+	return urlFallback(
+		os.Getenv("PROJECTS_URL"),
+		"http://localhost:8000/projects",
+	)
+}
+
+func (a *App) GetProjectsAPI() string {
+	return urlFallback(
+		os.Getenv("PROJECTS_API"),
+		"http://localhost:8000/api/projects",
+	)
+}
+
+func urlFallback(url, fallback string) string {
+	if url == "" {
+		return fallback
+	}
+	return url
+}
+
 func main() {
 	var app App
-	app.APIs.Blog = "http://localhost:8000/api/posts"
-	app.APIs.Projects = "http://localhost:8000/api/projects"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5050"
+	}
 
 	if err := app.EnsureData(); err != nil {
 		log.Printf("Error loading from API: %s", err.Error())
 	}
 
 	app.Home = Home{
-		Title:       "Welcome To My Portfolio | Swaye Chateau",
-		BlogUrl:     "http://localhost:8000",
-		ProjectsUrl: "http://localhost:8000/projects",
-		Projects:    []Project{},
-		Posts:       []Post{},
+		Title:            "Welcome To My Portfolio | Swaye Chateau",
+		BlogUrl:          app.GetBlogUrl(),
+		ProjectsUrl:      app.GetProjectsUrl(),
+		Projects:         []Project{},
+		Posts:            []Post{},
+		Submitted:        false,
+		SubmittedMessage: "",
+		SubmittedClass:   "hidden",
 	}
 
 	app.About = About{
-		Title: "About Me | Swaye Chateau",
+		Title:       "About Me | Swaye Chateau",
+		BlogUrl:     app.GetBlogUrl(),
+		ProjectsUrl: app.GetProjectsUrl(),
 	}
 
 	http.HandleFunc("/", app.HomeHandler)
 	http.HandleFunc("/about", app.AboutHandler)
-	log.Println("Starting server on :5000")
-	if err := http.ListenAndServe(":5000", nil); err != nil {
+	http.HandleFunc("/contact", app.ContactFormHandler)
+	log.Println("Starting server on :" + port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalf("Could not start server: %s\n", err.Error())
 	}
 }
