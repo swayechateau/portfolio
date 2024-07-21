@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} updated</title>
-    <link rel="icon" href="https://swayechateau.com/media/image/swaye-logo.png" type="image/png">
-    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="/static/img/swaye-logo.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
 <body class="flex flex-col w-full h-full bg-[#111]">
@@ -15,8 +15,7 @@
         class='fixed bottom-0 top-auto z-50 max-h-40 w-full p-4 transition-all duration-200 ease-in backdrop-blur-sm md:top-0 md:bottom-auto md:flex bg-main '>
         <div class="hidden md:flex justify-center items-center">
             <h1>
-                <img src="https://swayechateau.com/media/image/swaye-logo.png" alt="Swaye Chateau Logo"
-                    class="h-10 w-10 grayscale" />
+                <img src="/static/img/swaye-logo.png" alt="Swaye Chateau Logo" class="h-10 w-10 grayscale" />
             </h1>
         </div>
         <div class="flex items-center justify-evenly text-white md:grow md:justify-center md:space-x-3">
@@ -64,7 +63,7 @@
             </a>
 
         </div>
-        <script src="/navigation.js"></script>
+        <script src="/static/js/navigation.js"></script>
     </nav>
 
     <main class="relative grow">
@@ -143,7 +142,7 @@
 
         <section id="about" class="relative bg-cover ">
             <canvas id="about-matrix" class="absolute w-full h-full bg-cover -z-10"></canvas>
-            <script src="/matrix.js"></script>
+            <script src="/static/js/matrix.js"></script>
             <div class="bg-fade-top h-32"></div>
             <div class="flex flex-wrap items-center h-auto py-32 md:mx-20 xl:justify-center ">
                 <div class="flex w-full p-10 rounded-lg xl:w-4/5">
@@ -282,7 +281,7 @@
                     </div>
                 </form>
             </div>
-            <script src="/contact-form.js"></script>
+            <script src="/static/js/contact-form.js"></script>
         </section>
 
     </main>

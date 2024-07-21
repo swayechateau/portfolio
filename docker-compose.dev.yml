@@ -10,3 +10,4 @@ services:
       - .env
     volumes:
       - ./templates:/app/templates
+      - ./static:/app/static
