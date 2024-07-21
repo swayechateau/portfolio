@@ -17,12 +17,14 @@ import (
 	"time"
 )
 
+// ContactForm represents a contact form submission.
 type ContactForm struct {
 	Name    string `json:"name"`
 	Email   string `json:"email"`
 	Message string `json:"message"`
 }
 
+// Project represents a project with its details.
 type Project struct {
 	Hero       string   `json:"hero"`
 	Title      string   `json:"title"`
@@ -36,6 +38,7 @@ type Project struct {
 	UpdatedAt  string   `json:"updated_at"`
 }
 
+// Post represents a blog post.
 type Post struct {
 	Locale    string `json:"locale"`
 	Slug      string `json:"slug"`
@@ -51,16 +54,23 @@ type Post struct {
 	FullUrl   string `json:"full_url"`
 }
 
+// ApiResponse represents the structure of the API response.
 type ApiResponse struct {
-	Recent   []Post `json:"recent"`
+	// Recent represents a list of recent posts.
+	// It is a slice of Post structs and is tagged with `json:"recent"` for JSON serialization.
+	Recent []Post `json:"recent"`
+	// Featured represents a list of featured posts.
+	// It is a field of type []Post and is tagged with `json:"featured"`.
 	Featured []Post `json:"featured"`
 }
 
+// Database represents the structure of the database.
 type Database struct {
 	Projects []Project   `json:"projects"`
 	Posts    ApiResponse `json:"posts"`
 }
 
+// App represents the main application struct.
 type App struct {
 	CSRFToken     CSRFToken
 	Database      Database
@@ -69,29 +79,36 @@ type App struct {
 	About         About
 }
 
+// Home represents the home page of the website.
 type Home struct {
-	Title            string
-	BlogUrl          string
-	ProjectsUrl      string
-	Projects         []Project
-	Posts            []Post
-	Submitted        bool
-	SubmittedMessage string
-	SubmittedClass   string
-	CSRF             string
+	Title            string    // Title is the title of the home page.
+	BlogUrl          string    // BlogUrl is the URL of the blog website.
+	ProjectsUrl      string    // ProjectsUrl is the URL of the projects website.
+	Projects         []Project // Projects is a list of projects.
+	Posts            []Post    // Posts is a list of blog posts.
+	Submitted        bool      // Submitted indicates whether a form has been submitted.
+	SubmittedMessage string    // SubmittedMessage is the message to display after form submission.
+	SubmittedClass   string    // SubmittedClass is the CSS class to apply after form submission.
+	CSRF             string    // CSRF is the Cross-Site Request Forgery token.
 }
 
+// About represents information about a person or organization.
 type About struct {
-	Title       string
-	BlogUrl     string
-	ProjectsUrl string
+	Title       string // The title of the about page.
+	BlogUrl     string // The URL of the blog website.
+	ProjectsUrl string // The URL of the projects website.
 }
 
+// CSRFToken represents a Cross-Site Request Forgery (CSRF) token.
 type CSRFToken struct {
-	Token     string
-	ExpiresAt time.Time
+	Token     string    // The CSRF token value.
+	ExpiresAt time.Time // The expiration time of the CSRF token.
 }
 
+// SaveToCache saves the database to a cache file in JSON format.
+// It creates a new file named "cache.json" and writes the JSON representation of the database to it.
+// The database is marshaled using JSON indentation for readability.
+// If any error occurs during the file creation, marshaling, or writing process, an error is returned.
 func (db *Database) SaveToCache() error {
 	file, err := os.Create("cache.json")
 	if err != nil {
@@ -111,6 +128,11 @@ func (db *Database) SaveToCache() error {
 	return nil
 }
 
+// UpdateCacheIfNewData updates the cache with new data if available.
+// It fetches new data from the API using the provided blog URL and token.
+// If new data is found, it updates the cache and returns nil.
+// If no new data is found, it logs a message and returns nil.
+// If there is an error while fetching new data or updating the cache, it returns an error.
 func (db *Database) UpdateCacheIfNewData(blogUrl, token string) error {
 	newData := Database{}
 	if err := newData.FetchFromAPI(blogUrl, token); err != nil {
@@ -130,6 +152,9 @@ func (db *Database) UpdateCacheIfNewData(blogUrl, token string) error {
 	return nil
 }
 
+// LoadFromCache loads data from a cache file into the Database.
+// It opens the cache file, decodes the JSON data into the Database object,
+// and returns an error if any error occurs during the process.
 func (db *Database) LoadFromCache() error {
 	file, err := os.Open("cache.json")
 	if err != nil {
@@ -145,6 +170,9 @@ func (db *Database) LoadFromCache() error {
 	return nil
 }
 
+// FetchFromAPI fetches data from an API and saves it to the database.
+// It takes a blog URL and an authentication token as input parameters.
+// It returns an error if there was an issue fetching the posts or projects.
 func (db *Database) FetchFromAPI(blogUrl, token string) error {
 	var wg sync.WaitGroup
 	var errPosts, errProjects error
@@ -173,6 +201,8 @@ func (db *Database) FetchFromAPI(blogUrl, token string) error {
 	return db.SaveToCache()
 }
 
+// fetchPosts fetches posts from the API and updates the database with the response.
+// It takes a URL and a token as parameters and returns an error if fetching posts fails.
 func (db *Database) fetchPosts(url, token string) error {
 	apiResponse, err := fetchPostsFromAPI(url, token)
 	if err != nil {
@@ -182,6 +212,8 @@ func (db *Database) fetchPosts(url, token string) error {
 	return nil
 }
 
+// fetchProjects fetches projects from the API and updates the database with the fetched projects.
+// It returns an error if there was an issue fetching the projects.
 func (db *Database) fetchProjects() error {
 	projects, err := fetchProjectsFromAPI()
 	if err != nil {
@@ -191,6 +223,12 @@ func (db *Database) fetchProjects() error {
 	return nil
 }
 
+// CacheTemplates caches the parsed templates for the given filenames.
+// It takes a variadic parameter filenames, which represents the paths of the template files.
+// If the TemplateCache is nil, it initializes it as an empty map.
+// For each filename, it parses the template file using template.ParseFiles function.
+// If there is an error parsing the template, it logs a fatal error.
+// Finally, it stores the parsed template in the TemplateCache map with the filename as the key.
 func (a *App) CacheTemplates(filenames ...string) {
 	if a.TemplateCache == nil {
 		a.TemplateCache = make(map[string]*template.Template)
@@ -205,6 +243,8 @@ func (a *App) CacheTemplates(filenames ...string) {
 	}
 }
 
+// FetchData fetches data from the blog API and updates the cache in the database.
+// It returns an error if the data fetching or cache update fails.
 func (a *App) FetchData() error {
 	if err := a.Database.UpdateCacheIfNewData(a.GetBlogAPI(), a.GetBlogApiToken()); err != nil {
 		return fmt.Errorf("could not fetch data: %w", err)
@@ -212,6 +252,9 @@ func (a *App) FetchData() error {
 	return nil
 }
 
+// EnsureData ensures that the data is loaded into the App's database.
+// If the data is not available in the cache, it fetches it from the API.
+// It then updates the cache if new data is available.
 func (a *App) EnsureData() error {
 	if err := a.Database.LoadFromCache(); err != nil {
 		log.Printf("Error loading from cache: %s, fetching from API", err)
@@ -222,29 +265,45 @@ func (a *App) EnsureData() error {
 	return a.Database.UpdateCacheIfNewData(a.GetBlogAPI(), a.GetBlogApiToken())
 }
 
+// GetBlogUrl returns the URL of the blog.
+// It first checks the value of the environment variable "BLOG_URL".
+// If the environment variable is not set, it falls back to "http://localhost:8000".
 func (a *App) GetBlogUrl() string {
 	return urlFallback(
 		os.Getenv("BLOG_URL"),
 		"http://localhost:8000",
 	)
 }
+
+// GetBlogAPI returns the URL of the blog API. It first checks the value of the "BLOG_API" environment variable.
+// If the environment variable is not set, it falls back to the default URL "http://localhost:8000/api/posts".
 func (a *App) GetBlogAPI() string {
 	return urlFallback(
 		os.Getenv("BLOG_API"),
 		"http://localhost:8000/api/posts",
 	)
 }
+
+// GetBlogApiToken returns the API token for the blog.
 func (a *App) GetBlogApiToken() string {
 	return os.Getenv("BLOG_API_TOKEN")
 }
 
+// GetBlogClientId returns the client ID for the blog.
 func (a *App) GetBlogClientId() string {
 	return os.Getenv("BLOG_CLIENT_ID")
 }
+
+// GetBlogClientSecret returns the client secret for the blog.
 func (a *App) GetBlogClientSecret() string {
 	return os.Getenv("BLOG_CLIENT_SECRET")
 }
 
+// GetBlogApiAuthToken retrieves the API authentication token for the blog.
+// It sends a POST request to the blog's OAuth token endpoint with the client credentials,
+// and returns the access token received in the response.
+// If any error occurs during the process, it will be logged and a fatal error will be thrown.
+// The access token is also printed to the console for debugging purposes.
 func (a *App) GetBlogApiAuthToken() string {
 	client := &http.Client{}
 
@@ -294,6 +353,9 @@ func (a *App) GetBlogApiAuthToken() string {
 	return accessToken
 }
 
+// GetProjectsUrl returns the URL for retrieving projects.
+// It first checks the value of the PROJECTS_URL environment variable.
+// If the environment variable is not set, it falls back to "http://localhost:8000/projects".
 func (a *App) GetProjectsUrl() string {
 	return urlFallback(
 		os.Getenv("PROJECTS_URL"),
@@ -301,6 +363,9 @@ func (a *App) GetProjectsUrl() string {
 	)
 }
 
+// GetProjectsAPI returns the URL of the projects API.
+// It first checks the value of the PROJECTS_API environment variable.
+// If the environment variable is not set, it falls back to the default URL "http://localhost:8000/api/projects".
 func (a *App) GetProjectsAPI() string {
 	return urlFallback(
 		os.Getenv("PROJECTS_API"),
@@ -308,6 +373,8 @@ func (a *App) GetProjectsAPI() string {
 	)
 }
 
+// GetCSRFToken returns the CSRF token for the App.
+// If the CSRF token is empty, it generates a new one using the generateCSRFToken function.
 func (a *App) GetCSRFToken() string {
 	if a.CSRFToken.Token == "" {
 		a.CSRFToken, _ = generateCSRFToken()
@@ -315,11 +382,17 @@ func (a *App) GetCSRFToken() string {
 	return a.CSRFToken.Token
 }
 
+// NewCSRFToken generates a new CSRF token for the App.
+// It calls the generateCSRFToken function to generate the token
+// and assigns it to the App's CSRFToken field.
+// It returns the generated CSRF token.
 func (a *App) NewCSRFToken() string {
 	a.CSRFToken, _ = generateCSRFToken()
 	return a.CSRFToken.Token
 }
 
+// ValidateCSRFToken checks if the provided CSRF token is valid.
+// It returns true if the token matches the stored token and has not expired; otherwise, it returns false.
 func (a *App) ValidateCSRFToken(token string) bool {
 	if a.CSRFToken.Token == "" {
 		return false
@@ -327,6 +400,10 @@ func (a *App) ValidateCSRFToken(token string) bool {
 	return a.CSRFToken.Token == token && time.Now().Before(a.CSRFToken.ExpiresAt)
 }
 
+// HomeHandler handles the HTTP request for the home page.
+// It sets the CSRF token, fetches data, and populates the home page with projects and recent posts.
+// It also checks for query parameters related to form submission status and updates the home page accordingly.
+// If the template is not found or there is an error rendering the template, it returns an HTTP error.
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	a.Home.CSRF = a.NewCSRFToken()
 	if err := a.FetchData(); err != nil {
@@ -363,6 +440,10 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AboutHandler handles the HTTP request for the about page.
+// It loads the "templates/about.html" template from the App's TemplateCache
+// and renders it with the data stored in the App's About field.
+// If the template or rendering fails, it returns an HTTP 500 Internal Server Error.
 func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, ok := a.TemplateCache["templates/about.html"]
 	if !ok {
@@ -374,6 +455,10 @@ func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ContactFormHandler handles the HTTP request for the contact form.
+// It checks the Accept header of the request and calls the appropriate handler based on the content type.
+// If the Accept header is "application/json", it calls the ContactFormJSONHandler.
+// Otherwise, it calls the ContactFormRedirectHandler.
 func (a *App) ContactFormHandler(w http.ResponseWriter, r *http.Request) {
 	acceptHeader := r.Header.Get("Accept")
 	log.Printf("Accept header: %s\n", acceptHeader)
@@ -387,6 +472,19 @@ func (a *App) ContactFormHandler(w http.ResponseWriter, r *http.Request) {
 	a.ContactFormRedirectHandler(w, r)
 }
 
+// ContactFormJSONHandler handles the JSON request for the contact form.
+// It validates the request, processes the form data, and returns a JSON response.
+// If the request method is not POST, it returns an error response with status code 405 (Method Not Allowed).
+// If the CSRF token is invalid, it returns an error response with status code 403 (Forbidden).
+// Otherwise, it processes the form data, logs the submission, and returns a success response with status code 200 (OK).
+//
+// Parameters:
+// - w: The http.ResponseWriter used to write the response.
+// - r: The *http.Request representing the incoming request.
+//
+// Example usage:
+//
+//	http.HandleFunc("/contact", app.ContactFormJSONHandler)
 func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
 	type Response struct {
 		Status  string `json:"status"`
@@ -408,22 +506,21 @@ func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !a.ValidateCSRFToken(r.FormValue("csrf")) {
+		response.Status = "error"
+		response.Message = "Invalid CSRF token"
+		w.WriteHeader(http.StatusForbidden)
+		jsonResponse, _ := json.Marshal(response)
+		w.Write(jsonResponse)
+		log.Println("Invalid CSRF token")
+		return
+	}
+
 	form := ContactForm{
 		Name:    r.FormValue("name"),
 		Email:   r.FormValue("email"),
 		Message: r.FormValue("message"),
 	}
-
-	// if err != nil {
-	// 	response.Status = "error"
-	// 	response.Message = "Bad request"
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	jsonResponse, _ := json.Marshal(response)
-	// 	w.Write(jsonResponse)
-	// 	log.Printf("Error decoding JSON: %v\n", err)
-	// 	return
-	// }
-	// defer r.Body.Close()
 
 	// Process the form data
 	log.Printf("Received contact form submission: %+v\n", form)
@@ -433,6 +530,11 @@ func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
+// ContactFormRedirectHandler handles the redirection after submitting a contact form.
+// It takes in the HTTP response writer and request as parameters.
+// If the request method is not POST, it redirects to the contact form page with an error status.
+// If the CSRF token is invalid, it redirects to the contact form page with an error status.
+// If the form data is valid, it processes the form data and redirects to the contact form page with a success status.
 func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request) {
 	redirectURL, _ := url.Parse("/#contactForm")
 	query := redirectURL.Query()
@@ -468,6 +570,11 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
 }
 
+// main is the entry point of the application.
+// It initializes the `app` variable, caches the templates,
+// sets the port, ensures data is loaded from the API,
+// initializes the `Home` and `About` structs,
+// sets up the HTTP request handlers, and starts the server.
 func main() {
 	var app App
 
@@ -507,6 +614,9 @@ func main() {
 	}
 }
 
+// fetchPostsFromAPI fetches posts from the specified API endpoint.
+// It sends a GET request to the provided URL with the given token as authorization.
+// The function returns an ApiResponse and an error if any occurred.
 func fetchPostsFromAPI(url, token string) (ApiResponse, error) {
 	var response ApiResponse
 	client := &http.Client{}
@@ -542,6 +652,8 @@ func fetchPostsFromAPI(url, token string) (ApiResponse, error) {
 	return response, nil
 }
 
+// fetchProjectsFromAPI fetches projects from an API.
+// It returns a slice of Project structs and an error, if any.
 func fetchProjectsFromAPI() ([]Project, error) {
 	return []Project{
 		{
@@ -577,6 +689,10 @@ func fetchProjectsFromAPI() ([]Project, error) {
 	}, nil
 }
 
+// generateCSRFToken generates a CSRF token.
+// It uses the crypto/rand package to generate a random byte slice,
+// encodes it using base64.URLEncoding, and returns a CSRFToken struct
+// containing the token and its expiration time.
 func generateCSRFToken() (CSRFToken, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
@@ -591,6 +707,7 @@ func generateCSRFToken() (CSRFToken, error) {
 	}, nil
 }
 
+// urlFallback returns the given URL if it is not empty, otherwise it returns the fallback URL.
 func urlFallback(url, fallback string) string {
 	if url == "" {
 		return fallback
