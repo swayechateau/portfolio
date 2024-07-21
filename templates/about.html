@@ -142,11 +142,12 @@
 
 <body class="flex flex-col w-full h-full">
     <!-- Navigation (Mobile and Desktop) -->
-    <nav id="navigation" class='navigation bg-main'> <!-- bg-transparent -->
-        <div class="nav-logo">
+    <nav id="navigation"
+        class='fixed bottom-0 top-auto z-50 max-h-40 w-full py-2 transition-all duration-200 ease-in backdrop-blur-sm md:top-0 md:bottom-auto md:flex bg-main '>
+        <div class="hidden md:flex justify-center items-center">
             <h1>
-                <span class="text-3xl font-bold text-green-500">S</span>
-                <span class="text-3xl font-bold text-yellow-500">C</span>
+                <img src="https://swayechateau.com/media/image/swaye-logo.png" alt="Swaye Chateau Logo"
+                    class="h-10 w-10 grayscale" />
             </h1>
         </div>
         <div class="flex items-center justify-evenly text-white md:grow md:justify-center md:space-x-3">
@@ -342,7 +343,7 @@
         <div class="flex flex-col items-center justify-between text-xl md:flex-row">
             <div id="copyright" class="p-2">
                 <p class="text-white">
-                    Made with <span class="text-red-500">❤</span> by
+                    Made with <span class="text-green-500">❤</span> by
                     <a href="{{.BlogUrl}}" class="text-white hover:text-green-400 font-bold">
                         <span>Swaye Chateau</span>
                     </a>
