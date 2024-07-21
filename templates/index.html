@@ -18,7 +18,8 @@
         }
 
         .bg-main {
-            background-image: linear-gradient(104deg, rgba(131, 58, 180, 0.5) 0%, rgba(253, 29, 29, 0.5) 50%, rgba(252, 176, 69, 0.5) 100%);
+            background-image: linear-gradient(104deg, rgba(35, 32, 36, 0.5) 0%, rgba(24, 67, 23, 0.5) 50%, rgba(43, 105, 18, 0.5) 100%);
+            /* linear-gradient(60deg, #333 0%, rgb(134, 239, 172) 100%) */
         }
 
         .navigation {
@@ -142,7 +143,7 @@
 
 <body class="flex flex-col w-full h-full">
     <!-- Navigation (Mobile and Desktop) -->
-    <nav id="navigation" class='navigation bg-main'> <!-- bg-transparent -->
+    <nav id="navigation" class='navigation bg-main backdrop-blur-sm'>
         <div class="nav-logo">
             <h1>
                 <img src="https://swayechateau.com/media/image/swaye-logo.png" alt="Swaye Chateau Logo"
@@ -268,7 +269,7 @@
                         <div class="px-6 pt-4 pb-2">
                             {{range .Tags}}
                             <span key={tag}
-                                class="mb-2 mr-2 inline-block rounded-full bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700">
+                                class="mb-2 mr-2 inline-block px-2 py-1 text-sm font-semibold text-green-700">
                                 #{{.}}
                             </span>
                             {{end}}
@@ -276,15 +277,15 @@
                         <!-- Project Action Buttons -->
                         <div class="pt-4 pb-2 text-center">
                             <a href={{.LiveUrl}} target="_blank" passHref rel="noopener noreferrer"
-                                class="m-1 inline-block cursor-pointer rounded bg-[rgba(255,255,255,0.1)] py-2 px-4 uppercase backdrop-blur hover:bg-[rgba(255,255,255,0.2)]">
+                                class="m-1 inline-block cursor-pointer rounded bg-green-900 py-2 px-4 uppercase backdrop-blur hover:bg-green-700">
                                 View Demo
                             </a>
                             <a href={{.GitRepo}} target="_blank" rel="noopener noreferrer"
-                                class="m-1 inline-block cursor-pointer rounded bg-[rgba(255,255,255,0.1)] py-2 px-4 uppercase backdrop-blur hover:bg-[rgba(255,255,255,0.2)]">
+                                class="m-1 inline-block cursor-pointer rounded bg-green-900 py-2 px-4 uppercase backdrop-blur hover:bg-green-700">
                                 View Code
                             </a>
                             <a href={{.CaseStudy}} target="_blank" rel="noopener noreferrer"
-                                class="m-1 inline-block cursor-pointer rounded bg-[rgba(255,255,255,0.1)] py-2 px-4 uppercase backdrop-blur hover:bg-[rgba(255,255,255,0.2)]">
+                                class="m-1 inline-block cursor-pointer rounded bg-green-900 py-2 px-4 uppercase backdrop-blur hover:bg-green-700">
                                 View Case Study
                             </a>
                         </div>
@@ -633,7 +634,7 @@
         <div class="flex flex-col items-center justify-between text-xl md:flex-row">
             <div id="copyright" class="p-2">
                 <p class="text-white">
-                    Made with <span class="text-red-500">❤</span> by
+                    Made with <span class="text-green-500">❤</span> by
                     <a href="{{.BlogUrl}}" class="text-white hover:text-green-400 font-bold">
                         <span>Swaye Chateau</span>
                     </a>
