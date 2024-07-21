@@ -469,7 +469,8 @@
             </div>
             <div class="flex items-center justify-center">
                 <form id="contactForm" action="/contact" method="POST"
-                    class="w-full p-4 md:w-3/4 lg:w-3/6 border border-[#eee] rounded-l hover:border-green-600">
+                    class="w-full p-4 md:w-3/4 lg:w-3/6 md:border md:border-[#eee] rounded-l md:hover:border-green-600">
+                    <input type="hidden" name="csrf" value="{{.CSRF}}">
                     <div id="contactAlert" class="{{.SubmittedClass}} text-white p-4 border-green-500 border-l">
                         {{.SubmittedMessage}}
                     </div>

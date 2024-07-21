@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -12,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"time"
 )
 
 type ContactForm struct {
@@ -59,9 +62,11 @@ type Database struct {
 }
 
 type App struct {
-	Home     Home
-	About    About
-	Database Database
+	CSRFToken     CSRFToken
+	Database      Database
+	TemplateCache map[string]*template.Template
+	Home          Home
+	About         About
 }
 
 type Home struct {
@@ -73,6 +78,7 @@ type Home struct {
 	Submitted        bool
 	SubmittedMessage string
 	SubmittedClass   string
+	CSRF             string
 }
 
 type About struct {
@@ -81,20 +87,9 @@ type About struct {
 	ProjectsUrl string
 }
 
-var templateCache = map[string]*template.Template{}
-
-func init() {
-	cacheTemplates("templates/index.html", "templates/about.html")
-}
-
-func cacheTemplates(filenames ...string) {
-	for _, filename := range filenames {
-		tmpl, err := template.ParseFiles(filename)
-		if err != nil {
-			log.Fatalf("Error parsing template %s: %s\n", filename, err)
-		}
-		templateCache[filename] = tmpl
-	}
+type CSRFToken struct {
+	Token     string
+	ExpiresAt time.Time
 }
 
 func (db *Database) SaveToCache() error {
@@ -196,74 +191,18 @@ func (db *Database) fetchProjects() error {
 	return nil
 }
 
-func fetchPostsFromAPI(url, token string) (ApiResponse, error) {
-	var response ApiResponse
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return response, fmt.Errorf("error creating request: %v", err)
+func (a *App) CacheTemplates(filenames ...string) {
+	if a.TemplateCache == nil {
+		a.TemplateCache = make(map[string]*template.Template)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; GoClient/1.1)")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return response, fmt.Errorf("error making request: %w", err)
+	for _, filename := range filenames {
+		tmpl, err := template.ParseFiles(filename)
+		if err != nil {
+			log.Fatalf("Error parsing template %s: %s\n", filename, err)
+		}
+		a.TemplateCache[filename] = tmpl
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return response, fmt.Errorf("received non-200 status code %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return response, fmt.Errorf("error reading response body: %w", err)
-	}
-
-	if err = json.Unmarshal(body, &response); err != nil {
-		return response, fmt.Errorf("error unmarshalling response body: %w", err)
-	}
-
-	return response, nil
-}
-
-func fetchProjectsFromAPI() ([]Project, error) {
-	return []Project{
-		{
-			Hero:       "https://file.swayechateau.com/view/swayechateauWLGYnBgsrYxGZSputQx822",
-			Title:      "The Coldest Sunset",
-			Excerpt:    "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatibus quia, nulla! Maiores et perferendis eaque, exercitationem praesentium nihil.",
-			Tags:       []string{"photography", "travel", "winter"},
-			OpenSource: true,
-			GitRepo:    "https://github.com/swayechateau/fileserver",
-			LiveUrl:    "https://file.swayechateau.com",
-			CaseStudy:  "https://nobodycare.dev/en/post/building-a-file-server-api",
-		},
-		{
-			Hero:       "https://file.swayechateau.com/view/globaliyndTnSCK14onpASVq7n5?share_code=s5LUL0lAdDLS",
-			Title:      "File Server",
-			Excerpt:    "Custom built CDN for my media files.",
-			Tags:       []string{"markdown", "lumen", "microservice", "mariadb", "api"},
-			OpenSource: true,
-			GitRepo:    "https://github.com/swayechateau/fileserver",
-			LiveUrl:    "https://file.solemnity.icu",
-			CaseStudy:  "https://nobodycare.dev/en/post/building-a-file-server-api",
-		},
-		{
-			Hero:       "https://file.swayechateau.com/view/globalMaJKf2UDzFdqba7hG96U6?share_code=s6LHjQlIsFHc",
-			Title:      "Web Meta Grabber",
-			Excerpt:    "I Wanted an api I had permissions to use to get the meta data from websites for a chat application I was building.",
-			Tags:       []string{"markdown", "go", "docker", "microservice", "api"},
-			OpenSource: true,
-			GitRepo:    "https://github.com/swayechateau/web-meta-grabber",
-			LiveUrl:    "https://meta.solemnity.icu/",
-			CaseStudy:  "https://nobodycare.dev/en/posts/web-meta-grabber",
-		},
-	}, nil
 }
 
 func (a *App) FetchData() error {
@@ -281,154 +220,6 @@ func (a *App) EnsureData() error {
 	log.Println("Loaded data from cache")
 
 	return a.Database.UpdateCacheIfNewData(a.GetBlogAPI(), a.GetBlogApiToken())
-}
-
-func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	if err := a.FetchData(); err != nil {
-		log.Printf("Error fetching data: %s\n", err)
-	}
-	a.Home.Projects = a.Database.Projects
-	a.Home.Posts = a.Database.Posts.Recent
-	a.Home.SubmittedClass = "hidden"
-	// Check for query parameters
-	query := r.URL.Query()
-	if query.Get("status") == "success" {
-		a.Home.Submitted = true
-		a.Home.SubmittedClass = ""
-		a.Home.SubmittedMessage = "Contact form submitted successfully"
-	}
-
-	if query.Get("status") == "error" {
-		a.Home.Submitted = true
-		a.Home.SubmittedClass = ""
-		a.Home.SubmittedMessage = "An error occurred while submitting the contact form"
-	}
-
-	if a.Home.Submitted {
-		log.Printf("Contact form submitted: %s\n", a.Home.SubmittedMessage)
-	}
-
-	tmpl, ok := templateCache["templates/index.html"]
-	if !ok {
-		http.Error(w, "Unable to load template", http.StatusInternalServerError)
-		return
-	}
-	if err := tmpl.Execute(w, a.Home); err != nil {
-		http.Error(w, "Unable to render template", http.StatusInternalServerError)
-	}
-}
-
-func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, ok := templateCache["templates/about.html"]
-	if !ok {
-		http.Error(w, "Unable to load template", http.StatusInternalServerError)
-		return
-	}
-	if err := tmpl.Execute(w, a.About); err != nil {
-		http.Error(w, "Unable to render template", http.StatusInternalServerError)
-	}
-}
-
-func (a *App) ContactFormHandler(w http.ResponseWriter, r *http.Request) {
-	acceptHeader := r.Header.Get("Accept")
-	log.Printf("Accept header: %s\n", acceptHeader)
-	r.ParseForm()
-	if acceptHeader == "application/json" {
-		log.Println("Received JSON request")
-		a.ContactFormJSONHandler(w, r)
-		return
-	}
-	log.Println("Received form request")
-	a.ContactFormRedirectHandler(w, r)
-}
-
-func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
-	type Response struct {
-		Status  string `json:"status"`
-		Message string `json:"message"`
-	}
-	response := Response{
-		Status:  "success",
-		Message: "Contact form submitted successfully",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if r.Method != http.MethodPost {
-		response.Status = "error"
-		response.Message = "Method not allowed"
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		jsonResponse, _ := json.Marshal(response)
-		w.Write(jsonResponse)
-		log.Printf("Method not allowed: %s\n", r.Method)
-		return
-	}
-
-	form := ContactForm{
-		Name:    r.FormValue("name"),
-		Email:   r.FormValue("email"),
-		Message: r.FormValue("message"),
-	}
-
-	// if err != nil {
-	// 	response.Status = "error"
-	// 	response.Message = "Bad request"
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	jsonResponse, _ := json.Marshal(response)
-	// 	w.Write(jsonResponse)
-	// 	log.Printf("Error decoding JSON: %v\n", err)
-	// 	return
-	// }
-	// defer r.Body.Close()
-
-	// Process the form data
-	log.Printf("Received contact form submission: %+v\n", form)
-
-	jsonResponse, _ := json.Marshal(response)
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
-}
-
-func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request) {
-	redirectURL, err := url.Parse("/#contactForm")
-	query := redirectURL.Query()
-	query.Set("status", "error")
-	if err != nil {
-		log.Printf("Error parsing URL: %v\n", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		log.Printf("Method not allowed: %s\n", r.Method)
-		redirectURL.RawQuery = query.Encode()
-		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
-		return
-	}
-
-	form := ContactForm{
-		Name:    r.FormValue("name"),
-		Email:   r.FormValue("email"),
-		Message: r.FormValue("message"),
-	}
-
-	// decoder := json.NewDecoder(r.FormValue())
-	// err = decoder.Decode(&form)
-	// if err != nil {
-	// 	log.Printf("Error decoding JSON: %v\n", err)
-	// 	redirectURL.RawQuery = query.Encode()
-	// 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
-	// 	return
-	// }
-	// defer r.Body.Close()
-
-	// Process the form data
-	log.Printf("Received contact form submission: %+v\n", form)
-
-	// Set query parameters
-	query.Set("status", "success")
-	redirectURL.RawQuery = query.Encode()
-
-	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
 }
 
 func (a *App) GetBlogUrl() string {
@@ -517,15 +308,170 @@ func (a *App) GetProjectsAPI() string {
 	)
 }
 
-func urlFallback(url, fallback string) string {
-	if url == "" {
-		return fallback
+func (a *App) GetCSRFToken() string {
+	if a.CSRFToken.Token == "" {
+		a.CSRFToken, _ = generateCSRFToken()
 	}
-	return url
+	return a.CSRFToken.Token
+}
+
+func (a *App) NewCSRFToken() string {
+	a.CSRFToken, _ = generateCSRFToken()
+	return a.CSRFToken.Token
+}
+
+func (a *App) ValidateCSRFToken(token string) bool {
+	if a.CSRFToken.Token == "" {
+		return false
+	}
+	return a.CSRFToken.Token == token && time.Now().Before(a.CSRFToken.ExpiresAt)
+}
+
+func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
+	a.Home.CSRF = a.NewCSRFToken()
+	if err := a.FetchData(); err != nil {
+		log.Printf("Error fetching data: %s\n", err)
+	}
+	a.Home.Projects = a.Database.Projects
+	a.Home.Posts = a.Database.Posts.Recent
+	a.Home.SubmittedClass = "hidden"
+	// Check for query parameters
+	query := r.URL.Query()
+	if query.Get("status") == "success" {
+		a.Home.Submitted = true
+		a.Home.SubmittedClass = "border-green-500"
+		a.Home.SubmittedMessage = "Contact form submitted successfully"
+	}
+
+	if query.Get("status") == "error" {
+		a.Home.Submitted = true
+		a.Home.SubmittedClass = "border-red-500"
+		a.Home.SubmittedMessage = "An error occurred while submitting the contact form"
+	}
+
+	if a.Home.Submitted {
+		log.Printf("Contact form submitted: %s\n", a.Home.SubmittedMessage)
+	}
+
+	tmpl, ok := a.TemplateCache["templates/index.html"]
+	if !ok {
+		http.Error(w, "Unable to load template", http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(w, a.Home); err != nil {
+		http.Error(w, "Unable to render template", http.StatusInternalServerError)
+	}
+}
+
+func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, ok := a.TemplateCache["templates/about.html"]
+	if !ok {
+		http.Error(w, "Unable to load template", http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(w, a.About); err != nil {
+		http.Error(w, "Unable to render template", http.StatusInternalServerError)
+	}
+}
+
+func (a *App) ContactFormHandler(w http.ResponseWriter, r *http.Request) {
+	acceptHeader := r.Header.Get("Accept")
+	log.Printf("Accept header: %s\n", acceptHeader)
+	r.ParseForm()
+	if acceptHeader == "application/json" {
+		log.Println("Received JSON request")
+		a.ContactFormJSONHandler(w, r)
+		return
+	}
+	log.Println("Received form request")
+	a.ContactFormRedirectHandler(w, r)
+}
+
+func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
+	type Response struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+	response := Response{
+		Status:  "success",
+		Message: "Contact form submitted successfully",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		response.Status = "error"
+		response.Message = "Method not allowed"
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		jsonResponse, _ := json.Marshal(response)
+		w.Write(jsonResponse)
+		log.Printf("Method not allowed: %s\n", r.Method)
+		return
+	}
+
+	form := ContactForm{
+		Name:    r.FormValue("name"),
+		Email:   r.FormValue("email"),
+		Message: r.FormValue("message"),
+	}
+
+	// if err != nil {
+	// 	response.Status = "error"
+	// 	response.Message = "Bad request"
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	jsonResponse, _ := json.Marshal(response)
+	// 	w.Write(jsonResponse)
+	// 	log.Printf("Error decoding JSON: %v\n", err)
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	// Process the form data
+	log.Printf("Received contact form submission: %+v\n", form)
+
+	jsonResponse, _ := json.Marshal(response)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request) {
+	redirectURL, _ := url.Parse("/#contactForm")
+	query := redirectURL.Query()
+	query.Set("status", "error")
+
+	if r.Method != http.MethodPost {
+		log.Printf("Method not allowed: %s\n", r.Method)
+		redirectURL.RawQuery = query.Encode()
+		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+		return
+	}
+
+	if !a.ValidateCSRFToken(r.FormValue("csrf")) {
+		log.Println("Invalid CSRF token")
+		redirectURL.RawQuery = query.Encode()
+		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+		return
+	}
+
+	form := ContactForm{
+		Name:    r.FormValue("name"),
+		Email:   r.FormValue("email"),
+		Message: r.FormValue("message"),
+	}
+
+	// Process the form data
+	log.Printf("Received contact form submission: %+v\n", form)
+
+	// Set query parameters
+	query.Set("status", "success")
+	redirectURL.RawQuery = query.Encode()
+
+	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
 }
 
 func main() {
 	var app App
+
+	app.CacheTemplates("templates/index.html", "templates/about.html")
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5050"
@@ -559,4 +505,95 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalf("Could not start server: %s\n", err.Error())
 	}
+}
+
+func fetchPostsFromAPI(url, token string) (ApiResponse, error) {
+	var response ApiResponse
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return response, fmt.Errorf("error creating request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; GoClient/1.1)")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return response, fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return response, fmt.Errorf("received non-200 status code %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return response, fmt.Errorf("error reading response body: %w", err)
+	}
+
+	if err = json.Unmarshal(body, &response); err != nil {
+		return response, fmt.Errorf("error unmarshalling response body: %w", err)
+	}
+
+	return response, nil
+}
+
+func fetchProjectsFromAPI() ([]Project, error) {
+	return []Project{
+		{
+			Hero:       "https://file.swayechateau.com/view/swayechateauWLGYnBgsrYxGZSputQx822",
+			Title:      "The Coldest Sunset",
+			Excerpt:    "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatibus quia, nulla! Maiores et perferendis eaque, exercitationem praesentium nihil.",
+			Tags:       []string{"photography", "travel", "winter"},
+			OpenSource: true,
+			GitRepo:    "https://github.com/swayechateau/fileserver",
+			LiveUrl:    "https://file.swayechateau.com",
+			CaseStudy:  "https://nobodycare.dev/en/post/building-a-file-server-api",
+		},
+		{
+			Hero:       "https://file.swayechateau.com/view/globaliyndTnSCK14onpASVq7n5?share_code=s5LUL0lAdDLS",
+			Title:      "File Server",
+			Excerpt:    "Custom built CDN for my media files.",
+			Tags:       []string{"markdown", "lumen", "microservice", "mariadb", "api"},
+			OpenSource: true,
+			GitRepo:    "https://github.com/swayechateau/fileserver",
+			LiveUrl:    "https://file.solemnity.icu",
+			CaseStudy:  "https://nobodycare.dev/en/post/building-a-file-server-api",
+		},
+		{
+			Hero:       "https://file.swayechateau.com/view/globalMaJKf2UDzFdqba7hG96U6?share_code=s6LHjQlIsFHc",
+			Title:      "Web Meta Grabber",
+			Excerpt:    "I Wanted an api I had permissions to use to get the meta data from websites for a chat application I was building.",
+			Tags:       []string{"markdown", "go", "docker", "microservice", "api"},
+			OpenSource: true,
+			GitRepo:    "https://github.com/swayechateau/web-meta-grabber",
+			LiveUrl:    "https://meta.solemnity.icu/",
+			CaseStudy:  "https://nobodycare.dev/en/posts/web-meta-grabber",
+		},
+	}, nil
+}
+
+func generateCSRFToken() (CSRFToken, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Printf("Error generating CSRF token: %s\n", err)
+		return CSRFToken{}, err
+	}
+	token := base64.URLEncoding.EncodeToString(b)
+	return CSRFToken{
+		Token:     token,
+		ExpiresAt: time.Now().Add(1 * time.Hour),
+	}, nil
+}
+
+func urlFallback(url, fallback string) string {
+	if url == "" {
+		return fallback
+	}
+	return url
 }
