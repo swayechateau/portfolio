@@ -13,9 +13,6 @@ services:
       - "traefik.http.routers.portfolio.rule=Host(`swaye.dev`)"
     networks:
       - default
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
 networks:
   default:
     external: true
