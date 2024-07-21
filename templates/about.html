@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="w-full h-full">
 
 <head>
     <meta charset="UTF-8">
@@ -7,38 +7,9 @@
     <title>{{.Title}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background-color: #111;
-        }
-
-        html,
-        body {
-            height: 100%;
-            width: 100%;
-        }
-
         .bg-main {
-            background-image: linear-gradient(104deg, rgba(131, 58, 180, 0.5) 0%, rgba(253, 29, 29, 0.5) 50%, rgba(252, 176, 69, 0.5) 100%);
-        }
-
-        .navigation {
-            position: fixed;
-            bottom: 0;
-            top: auto;
-            z-index: 50;
-            max-height: 10rem;
-            width: 100%;
-            padding: 0.5rem 0;
-            transition: all 0.2s ease-in;
-            backdrop-filter: blur(4px);
-        }
-
-        .shadow {
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-
-        .nav-logo {
-            display: none;
+            background-image: linear-gradient(104deg, rgba(35, 32, 36, 0.5) 0%, rgba(24, 67, 23, 0.5) 50%, rgba(43, 105, 18, 0.5) 100%);
+            /* linear-gradient(60deg, #333 0%, rgb(134, 239, 172) 100%) */
         }
 
         .bg-fade-bottom {
@@ -47,6 +18,22 @@
 
         .bg-fade-top {
             background-image: linear-gradient(360deg, transparent, rgba(37, 37, 37, 0.21), #111);
+        }
+
+        .animate-glow {
+            animation: glow 4s infinite;
+        }
+
+        .animate-blink {
+            animation: blink 1s infinite;
+        }
+
+        .gradient {
+            animation: gradient 15s ease infinite;
+        }
+
+        .para {
+            animation: para 50s linear infinite;
         }
 
         @keyframes blink {
@@ -99,48 +86,19 @@
             }
         }
 
-        .glow {
-            animation: glow 4s infinite;
-        }
-
-        .blink {
-            animation: blink 1s infinite;
-        }
-
-        .gradient {
-            animation: gradient 15s ease infinite;
-        }
-
-        .para {
-            animation: para 50s linear infinite;
-        }
-
         /* Desktop Styles */
         @media (min-width: 768px) {
-            .navigation {
-                top: 0;
-                bottom: auto;
-                display: flex;
-            }
-
-            .nav-logo {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
             .nav-logo h1 {
                 margin-left: 0.75rem;
                 margin-right: 0.75rem;
                 margin-top: 0.5rem;
                 margin-bottom: 0.5rem;
             }
-
         }
     </style>
 </head>
 
-<body class="flex flex-col w-full h-full">
+<body class="flex flex-col w-full h-full bg-[#111]">
     <!-- Navigation (Mobile and Desktop) -->
     <nav id="navigation"
         class='fixed bottom-0 top-auto z-50 max-h-40 w-full py-2 transition-all duration-200 ease-in backdrop-blur-sm md:top-0 md:bottom-auto md:flex bg-main '>
