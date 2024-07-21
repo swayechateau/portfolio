@@ -11,5 +11,5 @@ docker-build: build-linux
 
 dev:
 	@echo "Running docker container"
-	docker compose up -f docker-compose.dev.yml --build
+	docker compose -f docker-compose.dev.yml up --build
 	@echo "Docker container running"
