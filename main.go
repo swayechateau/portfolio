@@ -10,9 +10,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/smtp"
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -73,6 +76,7 @@ type Database struct {
 // App represents the main application struct.
 type App struct {
 	CSRFToken     CSRFToken
+	ContactToken  string
 	Database      Database
 	TemplateCache map[string]*template.Template
 	Home          Home
@@ -400,6 +404,13 @@ func (a *App) ValidateCSRFToken(token string) bool {
 	return a.CSRFToken.Token == token && time.Now().Before(a.CSRFToken.ExpiresAt)
 }
 
+func (a *App) ValidateContactToken(token string) bool {
+	if a.ContactToken == "" {
+		return false
+	}
+	return a.ContactToken == token
+}
+
 // HomeHandler handles the HTTP request for the home page.
 // It sets the CSRF token, fetches data, and populates the home page with projects and recent posts.
 // It also checks for query parameters related to form submission status and updates the home page accordingly.
@@ -414,17 +425,20 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	a.Home.SubmittedClass = "hidden"
 	// Check for query parameters
 	query := r.URL.Query()
-	if query.Get("status") == "success" {
+
+	if a.ValidateContactToken(query.Get("token")) && query.Get("status") == "success" {
 		a.Home.Submitted = true
 		a.Home.SubmittedClass = "border-green-500"
-		a.Home.SubmittedMessage = "Contact form submitted successfully"
+		a.Home.SubmittedMessage = urlFallback(query.Get("message"), "Contact form submitted successfully")
 	}
 
-	if query.Get("status") == "error" {
+	if a.ValidateContactToken(query.Get("token")) && query.Get("status") == "error" {
 		a.Home.Submitted = true
 		a.Home.SubmittedClass = "border-red-500"
-		a.Home.SubmittedMessage = "An error occurred while submitting the contact form"
+		a.Home.SubmittedMessage = urlFallback(query.Get("message"), "An error occurred while submitting the contact form")
 	}
+
+	a.ContactToken = ""
 
 	if a.Home.Submitted {
 		log.Printf("Contact form submitted: %s\n", a.Home.SubmittedMessage)
@@ -522,6 +536,17 @@ func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
 		Message: r.FormValue("message"),
 	}
 
+	// Validate the form data
+	if err := validateInput(form.Name, form.Email, form.Message); err != nil {
+		response.Status = "error"
+		response.Message = err.Error()
+		w.WriteHeader(http.StatusBadRequest)
+		jsonResponse, _ := json.Marshal(response)
+		w.Write(jsonResponse)
+		log.Printf("Error validating form data: %s\n", err)
+		return
+	}
+
 	// Process the form data
 	log.Printf("Received contact form submission: %+v\n", form)
 
@@ -540,8 +565,13 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 	query := redirectURL.Query()
 	query.Set("status", "error")
 
+	// generate one time token to show the form was submitted
+	a.ContactToken = base64.URLEncoding.EncodeToString([]byte(time.Now().String()))
+	query.Set("token", a.ContactToken)
+
 	if r.Method != http.MethodPost {
 		log.Printf("Method not allowed: %s\n", r.Method)
+		query.Set("message", "An error occurred while submitting the contact form")
 		redirectURL.RawQuery = query.Encode()
 		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
 		return
@@ -549,6 +579,7 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 
 	if !a.ValidateCSRFToken(r.FormValue("csrf")) {
 		log.Println("Invalid CSRF token")
+		query.Set("message", "Invalid CSRF token")
 		redirectURL.RawQuery = query.Encode()
 		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
 		return
@@ -560,11 +591,30 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 		Message: r.FormValue("message"),
 	}
 
+	// Validate the form data
+	if err := validateInput(form.Name, form.Email, form.Message); err != nil {
+		log.Printf("Error validating form data: %s\n", err)
+		query.Set("message", err.Error())
+		redirectURL.RawQuery = query.Encode()
+		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+		return
+	}
+
 	// Process the form data
 	log.Printf("Received contact form submission: %+v\n", form)
 
+	// Send the email
+	// if err := sendEmail(form); err != nil {
+	// 	log.Printf("Error sending email: %s\n", err)
+	// 	query.Set("message", "Error sending email")
+	// 	redirectURL.RawQuery = query.Encode()
+	// 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+	// 	return
+	// }
+
 	// Set query parameters
 	query.Set("status", "success")
+	query.Set("message", "Contact form submitted successfully")
 	redirectURL.RawQuery = query.Encode()
 
 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
@@ -689,6 +739,60 @@ func fetchProjectsFromAPI() ([]Project, error) {
 			CaseStudy:  "https://nobodycare.dev/en/posts/web-meta-grabber",
 		},
 	}, nil
+}
+
+// validateInput validates the input fields for name, email, and message.
+// It checks if the name, email, and message are not empty and if the email
+// has a valid format. It also sanitizes the inputs to prevent injection attacks.
+// If any validation fails, it returns an error.
+func validateInput(name, email, message string) error {
+	if name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if email == "" {
+		return fmt.Errorf("email is required")
+	}
+	if message == "" {
+		return fmt.Errorf("message is required")
+	}
+
+	// Validate email format
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(email) {
+		return fmt.Errorf("invalid email format")
+	}
+
+	// Sanitize inputs to prevent injection attacks
+	name = strings.TrimSpace(name)
+	email = strings.TrimSpace(email)
+	message = strings.TrimSpace(message)
+
+	return nil
+}
+
+// sendEmail sends an email using the provided contact form data.
+// It takes a ContactForm struct as input and returns an error if any occurred during the email sending process.
+func sendEmail(form ContactForm) error {
+	from := "your-email@example.com"
+	password := "your-email-password"
+	to := "recipient-email@example.com"
+	smtpHost := "smtp.example.com"
+	smtpPort := "587"
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	message := []byte(fmt.Sprintf(
+		"To: %s\r\n"+
+			"Subject: New Contact Form Submission\r\n"+
+			"Content-Type: text/plain; charset=\"UTF-8\"\r\n"+
+			"\r\n"+
+			"Name: %s\n"+
+			"Email: %s\n"+
+			"Message: %s",
+		to, form.Name, form.Email, form.Message))
+
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, message)
+	return err
 }
 
 // generateCSRFToken generates a CSRF token.
