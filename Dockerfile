@@ -20,6 +20,8 @@ WORKDIR /app
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/portfolio .
 COPY --from=builder /app/templates ./templates
+COPY --from=builder /app/static ./static
+COPY --from=builder /app/storage ./storage
 
 # Expose port 5050 to the outside world
 EXPOSE 5050

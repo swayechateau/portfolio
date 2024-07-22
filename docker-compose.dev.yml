@@ -11,3 +11,4 @@ services:
     volumes:
       - ./templates:/app/templates
       - ./static:/app/static
+      - ./storage:/app/storage
