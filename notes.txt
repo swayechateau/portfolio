@@ -1,4 +1,0 @@
-add method to export logs to a file
-add method to send emails 
-add live projects url
-update demo projects

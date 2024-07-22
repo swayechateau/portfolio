@@ -1,0 +1,85 @@
+version: '3'
+
+vars:
+  BUILD_DIR: build
+  PROJECT_NAME: portfolio
+
+tasks:
+  build:
+    desc: "Builds the Go application"
+    cmds:
+      - echo "Building Go application"
+      - GOOS={{ sh("go env GOOS") }} GOARCH={{ sh("go env GOARCH") }} go build -o {{.BUILD_DIR}}/server main.go
+      - echo "Build complete"
+
+  build-linux:
+    desc: "Builds the Go application for Linux"
+    cmds:
+      - echo "Building Go application for Linux"
+      - GOOS=linux GOARCH=amd64 go build -o {{.BUILD_DIR}}/server main.go
+      - echo "Build complete"
+
+  css-build:
+    desc: "Builds CSS files"
+    cmds:
+      - echo "Building CSS"
+      - npm run build:css
+      - echo "CSS build complete"
+
+  css-watch:
+    desc: "Watches CSS files"
+    cmds:
+      - echo "Watching CSS"
+      - npm run watch:css
+      - echo "CSS watch started"
+
+  docker-build:
+    desc: "Builds Docker image"
+    cmds:
+      - echo "Building Docker image"
+      - docker build -t {{.PROJECT_NAME}} .
+      - echo "Docker image built"
+
+  docker-run:
+    desc: "Runs Docker container"
+    deps: [docker-build]
+    cmds:
+      - echo "Running Docker container"
+      - docker run -p 5050:5050 {{.PROJECT_NAME}}
+      - echo "Docker container running"
+
+  docker-stop:
+    desc: "Stops Docker container"
+    cmds:
+      - echo "Stopping Docker container"
+      - docker stop $(docker ps -a -q)
+      - echo "Docker container stopped"
+
+  run:
+    desc: "Runs the Go application"
+    cmds:
+      - echo "Running Go application"
+      - go run main.go
+      - echo "Go application running"
+
+  dev:
+    desc: "Runs Go application in development mode"
+    cmds:
+      - task: css-watch
+      - echo "Running Docker container in development mode"
+      - docker compose -f docker-compose.dev.yml up --build
+      - echo "Docker container running"
+
+  prod:
+    desc: "Runs Go application in production mode"
+    cmds:
+      - echo "Running Docker container in production mode"
+      - docker compose up -d --build
+      - echo "Docker container running"
+
+  stop:
+    desc: "Stops Docker container"
+    cmds:
+      - echo "Stopping Docker container"
+      - docker compose down
+      - echo "Docker container stopped"
