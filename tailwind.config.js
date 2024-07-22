@@ -10,6 +10,8 @@ module.exports = {
       backgroundImage: {
         'fade-bottom':
           'linear-gradient(180deg, transparent, rgba(37, 37, 37, 0.61), #111)',
+        'fade-bottom-2':
+          'linear-gradient(180deg, transparent, rgba(37, 37, 37, 0.61), #222)',
         'fade-top':
           'linear-gradient(360deg, transparent, rgba(37, 37, 37, 0.21), #111)',
         'main': 'linear-gradient(104deg, rgba(35, 32, 36, 0.5) 0%, rgba(24, 67, 23, 0.5) 50%, rgba(43, 105, 18, 0.5) 100%)',

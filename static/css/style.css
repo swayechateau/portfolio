@@ -728,6 +728,10 @@ video {
   margin-top: 5rem;
 }
 
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
 .block {
   display: block;
 }
@@ -1018,6 +1022,11 @@ video {
   background-color: transparent;
 }
 
+.bg-gray-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+}
+
 .bg-opacity-50 {
   --tw-bg-opacity: 0.5;
 }
@@ -1032,6 +1041,10 @@ video {
 
 .bg-main {
   background-image: linear-gradient(104deg, rgba(35, 32, 36, 0.5) 0%, rgba(24, 67, 23, 0.5) 50%, rgba(43, 105, 18, 0.5) 100%);
+}
+
+.bg-fade-bottom-2 {
+  background-image: linear-gradient(180deg, transparent, rgba(37, 37, 37, 0.61), #222);
 }
 
 .bg-cover {
@@ -1133,6 +1146,11 @@ video {
 .py-8 {
   padding-top: 2rem;
   padding-bottom: 2rem;
+}
+
+.py-20 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
 }
 
 .pb-2 {
@@ -1297,6 +1315,15 @@ video {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.text-blue-500 {
+  --tw-text-opacity: 1;
+  color: rgb(59 130 246 / var(--tw-text-opacity));
+}
+
+.underline {
+  text-decoration-line: underline;
 }
 
 .placeholder-gray-200::-moz-placeholder {

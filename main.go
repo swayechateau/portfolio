@@ -75,6 +75,7 @@ type Database struct {
 
 // App represents the main application struct.
 type App struct {
+	logger        *log.Logger
 	CSRFToken     CSRFToken
 	ContactToken  string
 	Database      Database
@@ -114,7 +115,7 @@ type CSRFToken struct {
 // The database is marshaled using JSON indentation for readability.
 // If any error occurs during the file creation, marshaling, or writing process, an error is returned.
 func (db *Database) SaveToCache() error {
-	file, err := os.Create("cache.json")
+	file, err := os.Create("storage/cache.json")
 	if err != nil {
 		return fmt.Errorf("could not create file: %w", err)
 	}
@@ -160,7 +161,7 @@ func (db *Database) UpdateCacheIfNewData(blogUrl, token string) error {
 // It opens the cache file, decodes the JSON data into the Database object,
 // and returns an error if any error occurs during the process.
 func (db *Database) LoadFromCache() error {
-	file, err := os.Open("cache.json")
+	file, err := os.Open("storage/cache.json")
 	if err != nil {
 		return fmt.Errorf("could not open file: %w", err)
 	}
@@ -241,7 +242,7 @@ func (a *App) CacheTemplates(filenames ...string) {
 	for _, filename := range filenames {
 		tmpl, err := template.ParseFiles(filename)
 		if err != nil {
-			log.Fatalf("Error parsing template %s: %s\n", filename, err)
+			a.logger.Fatalf("Error parsing template %s: %s\n", filename, err)
 		}
 		a.TemplateCache[filename] = tmpl
 	}
@@ -261,10 +262,10 @@ func (a *App) FetchData() error {
 // It then updates the cache if new data is available.
 func (a *App) EnsureData() error {
 	if err := a.Database.LoadFromCache(); err != nil {
-		log.Printf("Error loading from cache: %s, fetching from API", err)
+		a.logger.Printf("Error loading from cache: %s, fetching from API", err)
 		return a.Database.FetchFromAPI(a.GetBlogAPI(), a.GetBlogApiToken())
 	}
-	log.Println("Loaded data from cache")
+	a.logger.Println("Loaded data from cache")
 
 	return a.Database.UpdateCacheIfNewData(a.GetBlogAPI(), a.GetBlogApiToken())
 }
@@ -319,29 +320,29 @@ func (a *App) GetBlogApiAuthToken() string {
 	}
 	formDataBytes, err := json.Marshal(formData)
 	if err != nil {
-		log.Fatalf("Error marshalling form data: %v", err)
+		a.logger.Fatalf("Error marshalling form data: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", a.GetBlogUrl()+"/oauth/token", bytes.NewBuffer(formDataBytes))
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		a.logger.Fatalf("Error creating request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
+		a.logger.Fatalf("Error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
+		a.logger.Fatalf("Error reading response body: %v", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Received non-200 status code: %d, body: %s", resp.StatusCode, body)
+		a.logger.Fatalf("Received non-200 status code: %d, body: %s", resp.StatusCode, body)
 	}
 
 	var tokenResponse struct {
@@ -349,7 +350,7 @@ func (a *App) GetBlogApiAuthToken() string {
 	}
 
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
-		log.Fatalf("Error unmarshalling response body: %v", err)
+		a.logger.Fatalf("Error unmarshalling response body: %v", err)
 	}
 
 	accessToken := tokenResponse.AccessToken
@@ -418,7 +419,7 @@ func (a *App) ValidateContactToken(token string) bool {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	a.Home.CSRF = a.NewCSRFToken()
 	if err := a.FetchData(); err != nil {
-		log.Printf("Error fetching data: %s\n", err)
+		a.logger.Printf("Error fetching data: %s\n", err)
 	}
 	a.Home.Projects = a.Database.Projects
 	a.Home.Posts = a.Database.Posts.Recent
@@ -441,7 +442,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	a.ContactToken = ""
 
 	if a.Home.Submitted {
-		log.Printf("Contact form submitted: %s\n", a.Home.SubmittedMessage)
+		a.logger.Printf("Contact form submitted: %s\n", a.Home.SubmittedMessage)
 	}
 
 	tmpl, ok := a.TemplateCache["templates/index.html"]
@@ -461,10 +462,12 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 func (a *App) AboutHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, ok := a.TemplateCache["templates/about.html"]
 	if !ok {
+		a.logger.Printf("Error loading about template from cache")
 		http.Error(w, "Unable to load template", http.StatusInternalServerError)
 		return
 	}
 	if err := tmpl.Execute(w, a.About); err != nil {
+		a.logger.Printf("Error rendering about template: %s\n", err)
 		http.Error(w, "Unable to render template", http.StatusInternalServerError)
 	}
 }
@@ -550,6 +553,17 @@ func (a *App) ContactFormJSONHandler(w http.ResponseWriter, r *http.Request) {
 	// Process the form data
 	log.Printf("Received contact form submission: %+v\n", form)
 
+	// Send the email
+	if err := sendEmail(form); err != nil {
+		response.Status = "error"
+		response.Message = "Error sending email"
+		w.WriteHeader(http.StatusInternalServerError)
+		jsonResponse, _ := json.Marshal(response)
+		w.Write(jsonResponse)
+		log.Printf("Error sending email: %s\n", err)
+		return
+	}
+
 	jsonResponse, _ := json.Marshal(response)
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
@@ -570,7 +584,7 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 	query.Set("token", a.ContactToken)
 
 	if r.Method != http.MethodPost {
-		log.Printf("Method not allowed: %s\n", r.Method)
+		a.logger.Printf("Method not allowed: %s\n", r.Method)
 		query.Set("message", "An error occurred while submitting the contact form")
 		redirectURL.RawQuery = query.Encode()
 		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
@@ -578,7 +592,7 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if !a.ValidateCSRFToken(r.FormValue("csrf")) {
-		log.Println("Invalid CSRF token")
+		a.logger.Println("Invalid CSRF token")
 		query.Set("message", "Invalid CSRF token")
 		redirectURL.RawQuery = query.Encode()
 		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
@@ -593,7 +607,7 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 
 	// Validate the form data
 	if err := validateInput(form.Name, form.Email, form.Message); err != nil {
-		log.Printf("Error validating form data: %s\n", err)
+		a.logger.Printf("Error validating form data: %s\n", err)
 		query.Set("message", err.Error())
 		redirectURL.RawQuery = query.Encode()
 		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
@@ -604,13 +618,13 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 	log.Printf("Received contact form submission: %+v\n", form)
 
 	// Send the email
-	// if err := sendEmail(form); err != nil {
-	// 	log.Printf("Error sending email: %s\n", err)
-	// 	query.Set("message", "Error sending email")
-	// 	redirectURL.RawQuery = query.Encode()
-	// 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
-	// 	return
-	// }
+	if err := sendEmail(form); err != nil {
+		a.logger.Printf("Error sending email: %s\n", err)
+		query.Set("message", "Error sending email")
+		redirectURL.RawQuery = query.Encode()
+		http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
+		return
+	}
 
 	// Set query parameters
 	query.Set("status", "success")
@@ -620,22 +634,43 @@ func (a *App) ContactFormRedirectHandler(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, redirectURL.String(), http.StatusSeeOther)
 }
 
+func (a *App) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	tmpl, ok := a.TemplateCache["templates/404.html"]
+	if !ok {
+		a.logger.Printf("Error loading 404 template from cache")
+		http.Error(w, "Unable to load template", http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(w, nil); err != nil {
+		a.logger.Printf("Error rendering 404 template: %s\n", err)
+		http.Error(w, "Unable to render template", http.StatusInternalServerError)
+	}
+}
+
 // main is the entry point of the application.
 // It initializes the `app` variable, caches the templates,
 // sets the port, ensures data is loaded from the API,
 // initializes the `Home` and `About` structs,
 // sets up the HTTP request handlers, and starts the server.
 func main() {
-	var app App
+	logger, err := initLogger("storage/app.log")
+	if err != nil {
+		log.Fatalf("Error initializing logger: %s\n", err)
+	}
 
-	app.CacheTemplates("templates/index.html", "templates/about.html")
+	app := App{
+		logger: logger,
+	}
+
+	app.CacheTemplates("templates/index.html", "templates/about.html", "templates/404.html")
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5050"
 	}
 
 	if err := app.EnsureData(); err != nil {
-		log.Printf("Error loading from API: %s", err.Error())
+		app.logger.Printf("Error loading from API: %s", err.Error())
 	}
 
 	app.Home = Home{
@@ -655,14 +690,27 @@ func main() {
 		ProjectsUrl: app.GetProjectsUrl(),
 	}
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux := http.NewServeMux()
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	http.HandleFunc("/", app.HomeHandler)
-	http.HandleFunc("/about", app.AboutHandler)
-	http.HandleFunc("/contact", app.ContactFormHandler)
-	log.Println("Starting server on :" + port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatalf("Could not start server: %s\n", err.Error())
+	mux.HandleFunc("/", app.HomeHandler)
+	mux.HandleFunc("/about", app.AboutHandler)
+	mux.HandleFunc("/contact", app.ContactFormHandler)
+
+	// Set custom 404 handler
+	mux.HandleFunc("/404", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" && r.URL.Path != "/about" && r.URL.Path != "/contact" && !strings.HasPrefix(r.URL.Path, "/static/") {
+			app.NotFoundHandler(w, r)
+		} else {
+			mux.ServeHTTP(w, r)
+		}
+	})
+
+	loggedMux := loggingMiddleware(app.logger, mux)
+
+	app.logger.Println("Starting server on :" + port)
+	if err := http.ListenAndServe(":"+port, loggedMux); err != nil {
+		app.logger.Fatalf("Could not start server: %s\n", err.Error())
 	}
 }
 
@@ -709,14 +757,14 @@ func fetchPostsFromAPI(url, token string) (ApiResponse, error) {
 func fetchProjectsFromAPI() ([]Project, error) {
 	return []Project{
 		{
-			Hero:       "https://file.swayechateau.com/view/swayechateauWLGYnBgsrYxGZSputQx822",
-			Title:      "The Coldest Sunset",
-			Excerpt:    "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatibus quia, nulla! Maiores et perferendis eaque, exercitationem praesentium nihil.",
-			Tags:       []string{"photography", "travel", "winter"},
+			Hero:       "/static/img/project-hulu-clone.png",
+			Title:      "Hulu Clone",
+			Excerpt:    "A read-only clone of Hulu's website.",
+			Tags:       []string{"tailwindcss", "Next.JS", "vercel"},
 			OpenSource: true,
-			GitRepo:    "https://github.com/swayechateau/fileserver",
-			LiveUrl:    "https://file.swayechateau.com",
-			CaseStudy:  "https://nobodycare.dev/en/post/building-a-file-server-api",
+			GitRepo:    "https://github.com/swayechateau/clones-hulu",
+			LiveUrl:    "https://hulu.swaye.dev",
+			CaseStudy:  "https://nobodycare.dev/en/post/building-a-hulu-clone",
 		},
 		{
 			Hero:       "https://file.swayechateau.com/view/globaliyndTnSCK14onpASVq7n5?share_code=s5LUL0lAdDLS",
@@ -773,11 +821,11 @@ func validateInput(name, email, message string) error {
 // sendEmail sends an email using the provided contact form data.
 // It takes a ContactForm struct as input and returns an error if any occurred during the email sending process.
 func sendEmail(form ContactForm) error {
-	from := "your-email@example.com"
-	password := "your-email-password"
-	to := "recipient-email@example.com"
-	smtpHost := "smtp.example.com"
-	smtpPort := "587"
+	from := os.Getenv("EMAIL_FROM")
+	password := os.Getenv("EMAIL_PASSWORD")
+	to := os.Getenv("EMAIL_TO")
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
 
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
@@ -791,8 +839,7 @@ func sendEmail(form ContactForm) error {
 			"Message: %s",
 		to, form.Name, form.Email, form.Message))
 
-	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, message)
-	return err
+	return smtp.SendMail(smtpHost+":"+smtpPort, auth, "noreply@swaye.dev", []string{to}, message)
 }
 
 // generateCSRFToken generates a CSRF token.
@@ -803,8 +850,7 @@ func generateCSRFToken() (CSRFToken, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
-		log.Printf("Error generating CSRF token: %s\n", err)
-		return CSRFToken{}, err
+		return CSRFToken{}, fmt.Errorf("Error generating CSRF token: %s\n", err)
 	}
 	token := base64.URLEncoding.EncodeToString(b)
 	return CSRFToken{
@@ -819,4 +865,28 @@ func urlFallback(url, fallback string) string {
 		return fallback
 	}
 	return url
+}
+
+func initLogger(logFilePath string) (*log.Logger, error) {
+	// Open the log file in append mode, create it if it doesn't exist
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set up the multi-writer to write to both the log file and stdout
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+
+	// Create a new logger
+	logger := log.New(multiWriter, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	return logger, nil
+}
+
+func loggingMiddleware(logger *log.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		logger.Printf("method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
+	})
 }
