@@ -14,9 +14,9 @@
     <nav id="navigation"
         class='fixed bottom-0 top-auto z-50 max-h-40 w-full p-4 transition-all duration-200 ease-in backdrop-blur-sm md:top-0 md:bottom-auto md:flex bg-main '>
         <div class="hidden md:flex justify-center items-center">
-            <h1>
+            <h3>
                 <img src="/static/img/logo-swaye.png" alt="Swaye Chateau Logo" class="h-10 w-10 grayscale" />
-            </h1>
+            </h3>
         </div>
         <div class="flex items-center justify-evenly text-white md:grow md:justify-center md:space-x-3">
             <a href="/" title="Home"
@@ -90,9 +90,9 @@
         <section id="projects" class="relative z-10 pb-8">
             <div class="mx-5 -mt-32 rounded-2xl bg-[rgba(0,0,0,.5)] p-10 text-gray-200 backdrop-blur-sm md:mx-20">
                 <div class="text-center">
-                    <h1 class="text-3xl font-semibold text-gray-100 md:text-6xl">
+                    <h3 class="text-3xl font-semibold text-gray-100 md:text-6xl">
                         Featured Projects
-                    </h1>
+                    </h3>
                     <p class="my-4 text-xl">
                         Here are some of the projects I have worked on.
                     </p>
@@ -103,7 +103,7 @@
                     {{range .Projects}}
                     <div
                         class="overflow-hidden rounded shadow-lg md:first:col-span-2 md:col-span-1 xl:first:col-span-1 xl:col-span-1">
-                        <Image layout="responsive" height="300" src={{.Hero}} alt={{.Title}} />
+                        <img height="300" src="{{.Hero}}" alt="{{.Title}}" />
                         <!-- Project Title and Excerpt  -->
                         <div class="px-6 py-4">
                             <div class="mb-2 text-xl font-bold">{{.Title}}</div>
@@ -112,15 +112,14 @@
                         <!-- Project Tags  -->
                         <div class="px-6 pt-4 pb-2">
                             {{range .Tags}}
-                            <span key={tag}
-                                class="mb-2 mr-2 inline-block px-2 py-1 text-sm font-semibold text-green-700">
+                            <span class="mb-2 mr-2 inline-block px-2 py-1 text-sm font-semibold text-green-700">
                                 #{{.}}
                             </span>
                             {{end}}
                         </div>
                         <!-- Project Action Buttons -->
                         <div class="pt-4 pb-2 text-center">
-                            <a href={{.LiveUrl}} target="_blank" passHref rel="noopener noreferrer"
+                            <a href={{.LiveUrl}} target="_blank" rel="noopener noreferrer"
                                 class="m-1 inline-block cursor-pointer rounded bg-green-900 py-2 px-4 uppercase backdrop-blur hover:bg-green-700">
                                 View Demo
                             </a>
@@ -153,9 +152,9 @@
                             <div class="block w-48 h-48 mx-auto -mt-16 bg-center bg-cover rounded-full shadow-xl xl:hidden"
                                 style="background-image: url('https://yt3.ggpht.com/GojMrcrTTQDEx221wqyX_iIlLdmamrD6LQDwOY9Anv25sh2BgUiZ-LCVAQ4SPohIInh_O_i3zkY=s900-c-k-c0x00ffffff-no-rj')">
                             </div>
-                            <h1 class="pt-8 text-3xl font-bold text-white xl:pt-0">
+                            <h3 class="pt-8 text-3xl font-bold text-white xl:pt-0">
                                 Swaye Chateau
-                            </h1>
+                            </h3>
                             <div class="pt-3 mx-auto border-b-2 border-green-500 xl:mx-0"></div>
                             <p class="pt-4 text-xl font-bold text-white">
                                 Software Developer, Photographer, and Vlogger
@@ -194,7 +193,7 @@
         <section class="flex items-center justify-center text-gray-300 ">
             <div class="container px-5 py-24 ">
                 <div class="mb-12 text-center">
-                    <h1 class="text-4xl font-semibold text-gray-100 md:text-6xl">Recent Posts</h1>
+                    <h3 class="text-4xl font-semibold text-gray-100 md:text-6xl">Recent Posts</h3>
                     <a href="{{.BlogUrl}}/posts" target="_blank" rel="noopener noreferrer">
                         <div class="my-2 text-base text-green-300 hover:text-green-400 md:text-lg">See More Posts</div>
                     </a>
@@ -211,7 +210,7 @@
                                     <h2 class="mb-1 text-base font-medium text-green-300">
                                         {{ .Category }}
                                     </h2>
-                                    <h1 class="mb-3 text-2xl font-semibold">{{.Title}}</h1>
+                                    <h3 class="mb-3 text-2xl font-semibold">{{.Title}}</h3>
                                     <p class="mb-3 leading-relaxed">{{.Excerpt}}</p>
                                     <div class="flex flex-wrap items-center ">
                                         <div class="inline-flex items-center text-green-300 md:mb-2 lg:mb-0">Read More
@@ -245,9 +244,9 @@
                 <div class="my-4 text-lg text-gray-300 md:text-lg">
                     Have Something to say?
                 </div>
-                <h1 class="text-4xl font-semibold text-gray-100 md:text-6xl">
+                <h4 class="text-4xl font-semibold text-gray-100 md:text-6xl">
                     Contact Me
-                </h1>
+                </h4>
             </div>
             <div class="flex items-center justify-center">
                 <form id="contactForm" action="/contact" method="POST"
@@ -325,7 +324,7 @@
         </div>
 
         <div class="flex flex-col items-center justify-between text-xl md:flex-row">
-            <div id="copyright" class="p-2">
+            <div class="p-2">
                 <p class="text-white">
                     Made with <span class="text-green-500">❤</span> by
                     <a href="{{.BlogUrl}}" class="text-white hover:text-green-400 font-bold">
